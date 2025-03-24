@@ -1,1 +1,47 @@
+! velero 백업은 설치시 백업 저장서를 설정한다 !
+
+
+
+
+-- velero 백업 스크립트 --
+
+for nodelist in $(kubectl get node | awk '{print $1}'); do
+        velero backup create $nodelist \
+          --include-resources * \
+          --selector kubernetes.io/hostname=$nodelist
+done;
+
+-- 해석 --
+
+for nodelist in $(kubectl get node | awk '{print $1}'); do
+: awk '{print $1}': kubectl get node 명령의 출력에서 첫 번째 열(노드 이름)을 추출합니다. 
+즉, 각 노드의 이름만 가져옵니다.
+
+
+
+
+
+
+
+
+-- velero 복구 --
+
+기본 명령어 : velero restore create --from-backup <백업이름>
+
+-- velero 복구 스크립트 (ex)--
+
+velero restore create --from-backup prod-com-db-1
+velero restore create --from-backup prod-com-db-2
+velero restore create --from-backup prod-com-db-3
+velero restore create --from-backup prod-com-shrd-1
+...
+
+-- 복원 결과 확인 --
+
+kubectl get pods -n <namespace> 리소스 한번 get 해보기
+
+
+
+
+
 
