@@ -86,6 +86,14 @@ Summary 에서 이름 정하고 저장
 			[kube_node]
 			worker
 
+5. 설치
+- ansible-playbook -i inventory/${project_name}/inventory.ini --become --become-user=root cluster.yml -K
+			(--become --become-user=root 는 ansible문서 에서 become 검색하면 나옴. root로 설치 한다는 말임. -K는 암호랑 암튼 실행?)
+
+6. 설치 후, kubespray 가상화 로그 아웃 하기 python-venv 
+		명령어 : deactivate
+
+7. ‘root’ 권한으로 실행 : kubectl get no 
 
 
 
