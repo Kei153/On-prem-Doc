@@ -48,7 +48,8 @@ Summary 에서 이름 정하고 저장
     접속 테스트 : ssh <user>@<nodeIP>
 
 2. 마스터 노드로 정할 서버에 접속해서 k8s 구성 준비
-  - 마스터에서 노드로의 비번 없는 ssh 접속을 위해 1번 과정 반복
+  - 마스터에서 노드로의 비번 없는 ssh 접속을 위해 1번 과정 반복 (마스터에서 만든 키를 마스터와 노드에 다 키 복사)
+	명령어 : ssh-copy-id -i ~/.ssh/id_rsa.pub kei@<마스터,노드IP들>
 
 3. ansible 공식 홈페이지 참조 :  https://kubespray.io/#/docs/ansible/ansible (ansible 설치 참조)
   - - 먼저 kubespray 패키지 다운로드 : git clone https://github.com/kubernetes-sigs/kubespray.git
