@@ -34,7 +34,58 @@ Summary 에서 이름 정하고 저장
 
 
 
-
-
 --------------------------------------------------------------------------
+
+** 클러스터 구성 **
+
+1. 먼저 내 로컬 PC에서 비번없이 ssh만으로 접속 가능하게 키 복사/저장 작업
+  - 내 로컬에서 키를 만든다. (저장 경로는 ~/.ssh/id_rsa 로 함)
+    명령어 : ssh-keygen -t rsa -b 4096 (password 없이 만듬)
+    만들어진 키 중 pub키를 접근 할 가상 머신에 복사
+    명령어 : ssh-copy-id -i ~/.ssh/id_rsa.pub <user>@<nodeIP>
+    처음 한 번은 비밀번호를 묻습니다 (정상)
+    성공하면 복사한 각 노드의 ~/.ssh/authorized_keys 에 공개키가 자동 추가됨
+    접속 테스트 : ssh <user>@<nodeIP>
+
+2. 마스터 노드로 정할 서버에 접속해서 k8s 구성 준비
+  - 마스터에서 노드로의 비번 없는 ssh 접속을 위해 1번 과정 반복
+
+3. ansible 공식 홈페이지 참조 :  https://kubespray.io/#/docs/ansible/ansible (ansible 설치 참조)
+  - - 먼저 kubespray 패키지 다운로드 : git clone https://github.com/kubernetes-sigs/kubespray.git
+	-  ~kubespray 생긴거 확인
+	- kubespray 디렉토리에서 작업 
+	- 명령어 : sudo apt install python3.10-venv (가상화 환경에서 kubespray 설치 위해)
+
+4. ansible 문서에 쉘 세션 실행. 마지막 ‘pip install -U -r requirements.txt’ 까지 설치.
+    - # sample 디렉토리를 기준으로 실제로 작업할 폴더를 복사한다
+		: project_name=<이름 정하기>
+		: cp -rfp inventory/sample inventory/${project_name}
+    - 필요한 설정 값들 해당 문서 편집기로 작성
+		: cd inventory/${project-name}/group_vars/k8s_cluster/addons.yaml
+			- # helm 사용
+				helm_enabled: true
+				metrics_server_enabled: true
+
+		: cd inventory/${project-name}/group_vars/k8s_cluster/k8s-cluster.yml
+			- (…)
+			- kube_proxy_strict_arp: true
+			- (…)
+			- auto_renew_certificates: true
+
+		: inventory/${project-name}/inventory.ini
+			[all]
+			master ansible_host=10.0.2.4 ip=10.0.2.4 ansible_user=laonpeople
+			worker ansible_host=10.0.2.5 ip=10.0.2.5 ansible_user=laonpeople
+
+			[kube_control_plane]
+			master
+
+			[etcd:children]
+			kube_control_plane
+
+			[kube_node]
+			worker
+
+
+
 
