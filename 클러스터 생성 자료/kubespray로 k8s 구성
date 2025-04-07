@@ -1,48 +1,40 @@
-- 먼저 가상머신을 구성한다. 내 컴퓨터 환경은 맥os여서 호환 잘 되는 UTM을 설치하여 구성 하였다.
+1. 먼저 가상머신을 구성한다. 내 컴퓨터 환경은 맥os여서 호환 잘 되는 UTM을 설치하여 구성 하였다.
   UTM은 가상머신 만들 이미지가 필요하기 때문에 k8s를 지원하는 우분투 이미지를 다운 받는다.
 
-  https://releases.ubuntu.com/22.04/
-
+  - UTM 설치
+    brew install --cask utm
+  - 우분투 이미지 다운로드 (내 로컬 컴퓨터 os에 맞는 이미지 다운하기)
+     https://cdimage.ubuntu.com/releases/22.04/release/ (for 맥북)
+    https://releases.ubuntu.com/22.04/ (amd)
+    
+    
 🪛 1단계: 새 가상머신 만들기
 UTM 실행 > 상단 메뉴에서 + 버튼 클릭 (새 가상 머신 만들기)
-"Virtualize" 선택 (x86_64 시스템이므로)
+"Virtualize" 선택
 운영 체제: "Linux" 선택
-부트 이미지 선택: 다운받은 ubuntu-22.04-live-server-amd64.iso 선택
-설정 확인 후 "Continue" 클릭
+부트 이미지 선택(Boot ISO Image): '탐색' 버튼 누르고 다운받은 ubuntu-22.04-live-server-amd64.iso 선택
+메모리 - 4기가 CPU - 2core Storage - 30Gib 공유 폴더  - 건너뛰기 (default)
+Summary 에서 이름 정하고 저장
+
+2단계: 가상머신 구성하기
+  만든 가상머신 켜기. 켜면 부팅 화면 나옴
+  - 적당히 선택한다. 영어 등등.. 업뎃은 나중에 등으로
+  - ubuntu server로 선택하고 설치/ network, proxy configuration 은 건너뛰기
+  - mirror configuration 기다리고 다 끝나명 다음
+  - 나머지는 그냥 정해진 대로.. 마지막 profile configuration 만 잘 설정
+  - 그 뒤 나오는 ssh configuration  잘 설정.(install openssh server 체크)
+  - featured server snaps 는 건너뛰기
+  - install complete! 될 때가지 기다리고 다 되면 reboot
+  - reboot하고 로그인 화면 안나오고 커서만 깜박이면 우측 상단에서 두번째에 위치한 Drive image options 에서 
+  꺼내기를 누르고 Linux 2 옆에 위치한 Restarts the VM 을 눌러 재부팅하면 정상적으로 실행이 된다.
+  (출처: https://ssunw.tistory.com/entry/M1-mac-가상환경에-Linux-설치하기UTM-Ubuntu [ssunw:티스토리])
+
+
+
+
+
 
 
 
 --------------------------------------------------------------------------
-
-
-- 실제 구성은 azure에 VM을 4개 띄웠다. bastion1개, haproxy1개, cluster1개, worker node 1개
-
-- 설치 구성은 (kubespray) cluser에서 실시 했다.(chat gpt가 bastion 서버에서의 설치를 권장했으나, 잘 안됨! 다음에 시도)
-
-1. 사전 초기화 설정이 필요하다. 마스터로 만들 서버에서 진행 했다.
-  # ansible 설치 참조 링크
-# https://docs.ansible.com/ansible/latest/installation_guide/installation_distros.html#installing-ansible-on-ubuntu
-
-# ansible 설치
-sudo apt update
-sudo apt install software-properties-common -y
-sudo add-apt-repository --yes --update ppa:ansible/ansible
-sudo apt install ansible -y
-# python3 / pip 설치
-sudo apt install python3 python3-pip -y
-# 설치 확인
-echo ✅ ansible --version
-echo ✅ python3 --version
-echo ✅ pip --version
-
-
-# sshpass 설치 (SSH 키 전달 목적)
-sudo apt-get install sshpass #이 경우는 노드가 많거나 혹은 vm이 아닌 온프레미스 서버 직접 세팅할 때, ssh 접속 키가 필요해서 쓴다
-
-# 이런 식으로 서버들 정리
-declare -a IPS=(
-  "10.0.2.4"
-  "10.0.2.5"
-)
-
 
