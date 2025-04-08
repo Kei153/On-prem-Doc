@@ -3,8 +3,8 @@
 
   - UTM 설치
     brew install --cask utm
-  - 우분투 이미지 다운로드 (내 로컬 컴퓨터 os에 맞는 이미지 다운하기)
-     https://cdimage.ubuntu.com/releases/22.04/release/ (for 맥북)
+  - 우분투 이미지 다운로드 (내 로컬 컴퓨터 os에 맞는 이미지 다운하기))
+	맥북용 우분투 이미지 : https://ubuntu.com/download/server/arm
     https://releases.ubuntu.com/22.04/ (amd)
     
     
