@@ -1,3 +1,7 @@
+** cloud에서 vm 을 꾸려 k8s 구성하기 **
+	(완전히 다른 네트워크 환경이라, 로컬과 구분하여 자료 작성.)
+
+
 1. 먼저 가상머신을 구성한다. 내 컴퓨터 환경은 맥os여서 호환 잘 되는 UTM을 설치하여 구성 하였다.
   UTM은 가상머신 만들 이미지가 필요하기 때문에 k8s를 지원하는 우분투 이미지를 다운 받는다.
 
@@ -102,8 +106,6 @@ Summary 에서 이름 정하고 저장
 7. ‘root’ 권한으로 실행 : kubectl get no 
 
 
------------------------------------------------------------------------------------------------
-
 
 
 ** kube config 파일 있는 위치 : 가장 상위 경로에서 명령어 ‘ls’ > cd root/.kube/config **
@@ -111,7 +113,8 @@ Summary 에서 이름 정하고 저장
 
 
 
-내 로컬에서 마스터노드 접속하기!
+** 내 로컬에서 cloud server 로 구성한 k8s마스터노드 접속하기! **
+** 사전에 public에 bastion server가 있어야 한다. **
 
 	1. 먼저 bastion에서 마스터로 접속 되는지 확인
 		명령어 : nc -zv <마스터 노드 ip> 6443 
@@ -146,4 +149,26 @@ open /Applications/OpenLens.app
 		명령어 : ssh -v -N -i ./kei-test-bastion-vm_key.pem -L 6443:10.0.2.4:6443 laonpeople@52.231.103.36
 		(-v 옵션은 디버그 찍는 용도인데, 이걸 해놔야 명령어를 .sh파일로 실행해도 살아잇다. 명령어 후 오픈렌즈 켜서 작업.
 			다 끝나면 터미널에 로그 맨 아래가서 ctrl + c 누르면 명령어 완전 종료  - 디버그 안찍으면 쉘 실행하고 끝이고, 종료 작업을
-			할 수 없음. 그럼 또 터미널에서 명령어 : lsof -i :6443 해서 ssh 리슨하는 애들 다 죽여야 함)
+			할 수 없음. 그럼 또 터미널에서 명령어 : lsof -i :6443 해서 ssh 리슨하는 애들 다 죽여야 함)마스터 노드에서 파일 권한 임시 변경
+
+
+---------------------------------------------------------------------------------------------
+
+
+** 내 로컬의 UTM 프로그램으로 만든 가상머신에서 k8s 클러스터 구성 **
+
+1. 
+
+**내 pc의 virtual box 등으로 만든 가상머신 k8s를 내 로컬 pc에서 접속하기**
+
+1. 먼저 마스터노드에 있는 config파일을 내 로컬 pc로 복사한다.
+	scp <user>@<마스터 노드IP>:/etc/kubernetes/admin.conf ~/kubeconfig
+	# 로그인 비밀번호 입력
+	- 만약 복사 중에 'scp: /etc/kubernetes/admin.conf: Permission denied' 이런 에러가 뜬다면 파일의 소유권 권한 문제!
+		- 마스터 노드에서 파일 권한 임시 변경 : sudo cp /etc/kubernetes/admin.conf /home/<user>/admin.conf
+						sudo chown user:user /home/<user>/admin.conf (etc에 있는 conf파일을 사용자 홈 디렉토리에 복사해서 권한 변경 후, 이 파일을 로컬에 복사)
+
+2. 가상머신의 네트워크(k8s)와 내 로컬은 다른 네트환경 이기 때문에 포트포워딩 등 맞는 설정을 해야 한다.
+	- 먼저는 마스터 노드의 /etc/kubernetes/manifests/kube-apiserver.yaml 에 - --bind-address=0.0.0.0 를 확인
+	- 
+
