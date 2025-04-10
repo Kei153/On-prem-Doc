@@ -32,16 +32,20 @@ Summary 에서 이름 정하고 저장
 3단계 : 만든 가상머신 켜기. 켜면 부팅 화면 나옴
   - 적당히 선택한다. 영어 등등.. 업뎃은 나중에 등으로
   - ubuntu server로 선택하고 설치. 디폴트로 continue하며 skip 하다가 network configuration 에서 커스텀 한다.
+
+	(ex) 집에서 한 경우는 이렇게 해서 됐음
 	'enp0s1 eth -' 이부분 선택(엔터) > 작은 메뉴창이 뜨면, 선택지 중 Edit IPv4 선택 > IPv4 Method 에서 Manual 선택
 	구성 메뉴에서 나의 로컬 ip에 맞춰 작성한다. (나의 경우는 inet 10.10.110.52)
 
-	(ex)
 	항목	값	설명
 	Subnet	10.10.110.0/24	서브넷 대역대
 	Address	10.10.110.100	VM에 지정할 IP (로컬과 같은 대역)
 	Gateway	10.10.110.1	보통 공유기 주소 (Mac에서 netstat -rn으로 확인 가능)
 	Name servers	8.8.8.8,1.1.1.1	공용 DNS
 	Search domains	(비워도 OK)	사용 안 해도 됨
+
+	(ex2) 회사에서는 (사내 네트워크) 위 방법대로 안됐음..?(왜 인지 모름..)
+	그래서 그냥 auto가 지정해 주는 대로 바로 skip
 
 
   - mirror configuration 기다리고 다 끝나명 다음
