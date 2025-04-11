@@ -186,11 +186,17 @@ open /Applications/OpenLens.app
 **내 pc의 virtual box 등으로 만든 가상머신 k8s를 내 로컬 pc에서 접속하기**
 
 먼저 마스터노드에 있는 config파일을 내 로컬 pc로 복사한다.
-	scp <user>@<마스터 노드IP>:/etc/kubernetes/admin.conf ~/kubeconfig
-	# 로그인 비밀번호 입력
-	- 만약 복사 중에 'scp: /etc/kubernetes/admin.conf: Permission denied' 이런 에러가 뜬다면 파일의 소유권 권한 문제!
-		- 마스터 노드에서 파일 권한 임시 변경 : sudo cp /etc/kubernetes/admin.conf /home/<user>/admin.conf
-						sudo chown user:user /home/<user>/admin.conf (etc에 있는 conf파일을 사용자 홈 디렉토리에 복사해서 권한 변경 후, 이 파일을 로컬에 복사)
+	scp /etc/kubernetes/admin.conf <user>@<맥북IP>:~/admin.conf
+		했을때 안되면,
+	- 마스터 노드에서 로컬 맥북으로 파일 전송 (Mac에서 SSH 서버 열기)
+		GUI로:
+
+		시스템 설정 > 일반 > 공유
+		"원격 로그인(Remote Login)" 체크
+		→ 맥북이 SSH 서버로 작동하게 됨
+		→ 로컬 IP 확인 (터미널 명령어 : ipconfig getifaddr en0)
+		마스터 노드에서 로컬로 파일 전송 - scp /etc/kubernetes/admin.conf <mac_username>@<mac_ip>:~/admin.conf
+
 
 2. 가상머신의 네트워크(k8s)와 내 로컬은 다른 네트환경 이기 때문에 포트포워딩 등 맞는 설정을 해야 한다.
 	- 먼저는 마스터 노드의 /etc/kubernetes/manifests/kube-apiserver.yaml 에 - --bind-address=0.0.0.0 를 확인
