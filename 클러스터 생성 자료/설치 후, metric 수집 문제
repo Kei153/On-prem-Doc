@@ -1,1 +1,30 @@
-ㅇㅇ
+kubespray 설치 후, HPA 파일 배포했는데, 총 cpu당 수집되는 cpu 값이 정해지지 않음.
+calico나 metric-server등 여러가지 문제가 있었으나,일단 API 문제가 생긴다면 지우고 환경에 맞는 파일 다시 다운받아 재설치가 빠르다...
+
+
+1. 기존 메트릭 서버 제거
+  - kubectl delete deployment metrics-server -n kube-system
+    kubectl delete service metrics-server -n kube-system
+    kubectl delete apiservice v1beta1.metrics.k8s.io
+    (혹시 헬름 설치면) helm uninstall metrics-server -n kube-system
+
+2. Kubespray 설치 후라면, ARM64 환경에서도 호환되는 방식으로 재설치
+  - kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+      : 이 기본 설정만으로 안되면 components.yaml 을 다운로드 후, 수정한 뒤에 적용
+          아래 항목을 args:에 추가:
+                    - --kubelet-insecure-tls
+                    - --kubelet-preferred-address-types=InternalIP
+          (만약 문제가 생긴다면) 이미지 강제 지정도 방법! image: registry.k8s.io/metrics-server/metrics-server:v0.6.3 (v0.6.3은 실제로 ARM64 테스트 환경에서 잘 작동된 사례가 많음)
+
+3. 적용
+    kubectl apply -f metrics-server.yaml
+
+4. test
+    - API 리소스 등록 확인 : kubectl get apiservice | grep metrics (정상 : v1beta1.metrics.k8s.io   kube-system/metrics-server   True    5m)
+    - 노드 메트릭 확인 : kubectl top nodes
+    -  파드 메트릭 확인 : kubectl top pods -A 
+
+
+
+
+
