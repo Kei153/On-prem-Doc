@@ -3,4 +3,30 @@ metalLB 는 k8s 내부에서 도메인 접속을 위해 쓴다. 네트워크 계
 웹 브라우저에서 접속 가능. (회사는 사내 폐쇄망이라 사내에서만 도메인 접속이 됐음)
 
 
+** 헬름 차트로 설치시 뭐가 잘 안되면 일단 다시 지우는 법 **
+  
+  1. 헬름 uninstall 하기
+  2. 관련 리소스 클린업 : kubectl delete namespace metallb-system
+                    kubectl delete validatingwebhookconfiguration metallb-webhook-configuration
+                    kubectl delete mutatingwebhookconfiguration metallb-mutating-webhook-configuration
+                    kubectl delete ipaddresspool --all -n metallb-system
+                    kubectl delete l2advertisement --all -n metallb-system
+
+  3. Helm 레포 갱신 : helm repo update
+  4. 내 k8s 와 버젼 확인
+      (내 클러스터 버젼이 넘 높아서 뭔가 좀 일일이 찾아 봐야함. 이번 경우에는 bitnami에서 제공하는 metallb가 호환됐음)
+      helm repo add bitnami https://charts.bitnami.com/bitnami
+      helm repo update
+
+      helm install metallb bitnami/metallb \
+        --version 6.4.9 \
+        -n metallb-system \
+        --create-namespace \
+        -f values.yaml
+
+
+      ** metallb 는 values 파일과 IPAddressPool 파일을 같이 수정해줘야 한다.
+          (IPAddressPool 는 내 가상머신 서브넷 대역대 안에서 정하고, 마스터인지 로컬인지..아무튼 ping 을 날려서 타임아웃 떠야 안쓰는 거니까 확인 해 보고 정하기)
+      메탈lb는 controller와 speaker(daemonset)가 있다. controller는 마스터에 설정되게 암튼 tolerations 설정 잘 하기
+
 
