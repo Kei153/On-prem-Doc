@@ -24,7 +24,7 @@ calico나 metric-server등 여러가지 문제가 있었으나,일단 API 문제
     - 노드 메트릭 확인 : kubectl top nodes
     -  파드 메트릭 확인 : kubectl top pods -A 
 
-
+5. 이후에 HPA파일 배포해보니 매트릭 제대로 잡힘
 
 
 
