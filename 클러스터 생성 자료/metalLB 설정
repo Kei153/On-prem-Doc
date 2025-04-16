@@ -29,4 +29,50 @@ metalLB 는 k8s 내부에서 도메인 접속을 위해 쓴다. 네트워크 계
           (IPAddressPool 는 내 가상머신 서브넷 대역대 안에서 정하고, 마스터인지 로컬인지..아무튼 ping 을 날려서 타임아웃 떠야 안쓰는 거니까 확인 해 보고 정하기)
       메탈lb는 controller와 speaker(daemonset)가 있다. controller는 마스터에 설정되게 암튼 tolerations 설정 잘 하기
 
+      -- values.yaml 파일에 주요 수정 항목
+        : networkPolicy.kubeAPIServerPorts - enabled: true
+                                             kubeAPIServerPorts: [443, 6443, 8443] - 6443은 클러스터 접속포트, 나머지는.. HAproxy, apigateway,cert-manager등.. 서비스 쓸때 쓴다. 일단 그냥 다해줌
+        
+        : prometheusRule.enabled: false (프로메테우스 오퍼레이터 쓸때 메탈lb 알람 받게 하는 설정)
+          후에 쓰고 싶으면 오퍼레이터 설치하고 - helm upgrade metallb metallb/metallb \
+                                        -n metallb-system \
+                                        --set prometheusRule.enabled=true
+
+        : tolerations 값이 어려우니 잘 하기 (이거 하고 잘 배치 안되면 셀렉터도 수정)
+            controller:
+              enabled: true
+              nodeSelector:
+                node-role.kubernetes.io/control-plane: ""
+              tolerations:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+                  effect: NoSchedule
+
+            speaker:
+              enabled: true
+              nodeSelector:
+                node-role.kubernetes.io/worker: ""
+              tolerations:
+                - key: Service
+                  operator: Exists
+                  effect: NoSchedule
+
+        : controller.serviceAccount.automountServiceAccountToken: true
+        :  speaker.automountServiceAccountToken: true
+
+      -- speaker가 마스터에 안 뜨게 하려면 : speaker:
+                                        tolerations: [] (빈값)        
+                                    speaker에 워커 노드만 선택하는 nodeSelector : 
+                                        speaker:
+                                          nodeSelector:
+                                            node-role.kubernetes.io/worker: ""
+
+                                    그 전에 워커 노드에 라벨 붙여줘야 해:
+                                      kubectl label node <worker-node-name> node-role.kubernetes.io/worker=""
+
+
+
+
+
+
 
