@@ -1,1 +1,20 @@
 뭐 하나 한번에 되는게 없다... 왠만하면 너무 최신의 k8s를 설치하진 말자....
+
+
+
+values.yaml 파일 수정 부분..(metallb 설치 후 작성해서 로드벨런서 타입으로 정함. 노드포드로도 할 수 있으나 그에 맞춰 또 설정 해야 함)
+
+  -- Service 타입을 LoadBalancer로 변경
+      : controller:
+          service:
+            type: LoadBalancer
+
+  -- controller.hostPort.enabled: false
+        : 노드포트나 호스트 네트워크 방식으로 직접 80/443 열어야 할때 (true)
+
+  -- controller.hostNetwork : false
+  ** 후에 연동되는 시스템 도구에 따라 수정 값 달라질 수 있음
+--------------------------------------------------------------------------------- 
+
+
+
