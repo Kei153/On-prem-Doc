@@ -16,6 +16,6 @@
 11. 젠킨스
 12. harbor
 13. argocd
-14. prometheus-stack (grafana, prometheus, loki, promtail, tempo)
+14. prometheus-stack (grafana, prometheus, loki, promtail, tempo, opentelemetry)
 
 
