@@ -70,6 +70,10 @@ metalLB 는 k8s 내부에서 도메인 접속을 위해 쓴다. 네트워크 계
                                     그 전에 워커 노드에 라벨 붙여줘야 해:
                                       kubectl label node <worker-node-name> node-role.kubernetes.io/worker=""
 
+      -- 헬름 업데이트 : helm upgrade metallb bitnami/metallb \ 
+  -n metallb-system \
+  -f values-metallb.yaml
+
 
 
 
