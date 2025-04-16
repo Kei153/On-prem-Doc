@@ -74,6 +74,8 @@ metalLB 는 k8s 내부에서 도메인 접속을 위해 쓴다. 네트워크 계
   -n metallb-system \
   -f values-metallb.yaml
 
+      -- 업데이트 할땐 ipaddresspool 도 같이 재 배포해주기 : kubectl apply -f IPAddressplool.yaml
+
 
 
 
