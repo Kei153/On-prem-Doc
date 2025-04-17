@@ -40,11 +40,21 @@ pv : 창고 / pvc : 창고 대여 요청서 / storageclass : 요청서만 보고
                  sudo ufw allow from <K8s_Nodes_IP>/24 to any port 2049 proto udp
      포트 오픈 상태 확인 : sudo ss -tulpn | grep 2049
 
-7. NFS 서버 재시작 :
+7. export 반영 및 NFS 재시작 :
     sudo exportfs -ra
     sudo systemctl restart nfs-kernel-server
 
-8. Kubernetes 노드에서 연결 테스트 : 
+8.  (K8s 노드에서) mount 테스트 : 
+     sudo apt install -y nfs-common  # 모든 노드에서 한 번만 설치
+     sudo mount -t nfs <NFS서버IP>:/data/ /nfs (이건 마스터 노드에서만)
+     ls /nfs  # → 접근 잘 되면 OK! (이거 test 할려면 nfs 마운트 서버에 뭐라도 있어야 함)
+    (** 중요한 점인데, 마스터 노드에 내가 마운트할 하위 디렉토리 경로는 미리 만들고 helm install 이든 upgrade든 해야함)
+
+9. helm repo 로 설치 하는데, 설치할 때 (해당 디렉토리의)스토리지 클래스를 만드는 명령어 포함해서 설치
+   -- values.yaml 파일을 수정 먼저 한다. nfs.server 에 nfs 서버 주소만 수정 하믄 됨. 나머지는 설치하며 진행
+   -- nfs-provisioner.yaml 파일에 설치시 디렉토리 경로 확인 정도 하고 설치
+   -- 
+
 
 
 
