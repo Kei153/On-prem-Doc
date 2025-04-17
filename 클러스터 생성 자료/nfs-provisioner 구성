@@ -13,3 +13,20 @@ pv : 창고 / pvc : 창고 대여 요청서 / storageclass : 요청서만 보고
   ▼
 [NFS 서버에 디렉토리 만들고 → PV 생성 → PVC에 연결]
 
+
+1. nfs로 쓸 가상머신 서버 하나 만든다.
+2. 필수 패키지 설치 : sudo apt update
+                  sudo apt install -y nfs-kernel-server
+
+3. NFS export 디렉토리 생성 :
+   sudo mkdir -p /data/jenkins
+   sudo chown nobody:nogroup /data/jenkins
+   sudo chmod 777 /data/jenkins  # 테스트용 권한 (운영용은 tighter)
+
+4. /etc/exports 에 경로 등록 : 
+   echo "/data/jenkins *(rw,sync,no_subtree_check,no_root_squash)" | sudo tee -a /etc/exports
+
+
+
+
+
