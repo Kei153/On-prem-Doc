@@ -2,7 +2,7 @@
 
 
 
-values.yaml 파일 수정 부분..(metallb 설치 후 작성해서 로드벨런서 타입으로 정함. 노드포드로도 할 수 있으나 그에 맞춰 또 설정 해야 함)
+values.yaml 파일 수정 부분..(metallb 설치 후 작성해서 로드벨런서 타입으로 정함. 노드포드로도 할 수 있으나 그에 맞춰 또 설정 해야 함. 보통 nodeport로 서비스 타입만 바꾸면 됨)
 
   -- Service 타입을 LoadBalancer로 변경
       : controller:
