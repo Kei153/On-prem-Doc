@@ -10,12 +10,12 @@
 8. ingress-nginx 에 외부 IP 생겼으면 OK. test 해보기
     test1 : 외부 > 호스트 파일에 도메인 등록(등록 ip는 ingress-nginx-controller의 외부 IP) > ingress 만들기 > 클러스터 타입 서비스 > 파드에 도메인으로 접속 되는지 확인
     test2 : 외부 > 호스트 파일에 도메인 등록(등록 ip는 서비스 파드의 로드벨런서 타입 서비스의 외부 IP) > 로드벨런서 타입 서비스 > 파드에 도메인으로 접속 되는지 확인
-
-9. cert-manager
-10. api-gateway
-11. 젠킨스
+9. nfs-provisioner (nfs 서버 마운트. pv용)
+10. 젠킨스
+11. cert-manager(공인 IP 있을때) or openssl(test version)
 12. harbor
 13. argocd
-14. prometheus-stack (grafana, prometheus, loki, promtail, tempo, opentelemetry)
+14. api-gateway
+15. prometheus-stack (grafana, prometheus, loki, promtail, tempo, opentelemetry)
 
 
