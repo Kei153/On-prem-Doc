@@ -1,0 +1,15 @@
+pv : 창고 / pvc : 창고 대여 요청서 / storageclass : 요청서만 보고 알맞은 창고 만들어 주고 연결(규칙/정책 <어떻게 만들지>) / nfs-provisioner : 실제로 PV를 만들어주는 컨트롤러(프로그램)
+
+ storageclass 요청서 분석해서 창고 공간 전개도 그리는 건축자나 건축사, nfs-provisioner는 사람이 정해준 거 시킨대로 만드는 기계
+(nfs-provisioner 가 없음 안됨 사람이 요청대로 설계도 짜도 기계없음 창고 못 만듬)
+[PVC]
+  │
+  │ (storageClassName: nfs-storage)
+  ▼
+[StorageClass]
+  provisioner: nfs-provisioner.example.com
+  ▼
+[nfs-provisioner 컨트롤러 (Pod)]
+  ▼
+[NFS 서버에 디렉토리 만들고 → PV 생성 → PVC에 연결]
+
