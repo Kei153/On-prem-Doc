@@ -53,7 +53,55 @@ pv : 창고 / pvc : 창고 대여 요청서 / storageclass : 요청서만 보고
 9. helm repo 로 설치 하는데, 설치할 때 (해당 디렉토리의)스토리지 클래스를 만드는 명령어 포함해서 설치
    -- values.yaml 파일을 수정 먼저 한다. nfs.server 에 nfs 서버 주소만 수정 하믄 됨. 나머지는 설치하며 진행
    -- nfs-provisioner.yaml 파일에 설치시 디렉토리 경로 확인 정도 하고 설치
-   -- 
+
+
+ex) pvc 예제로 jenkins를 셋팅해 봄
+
+1. Jenkins PVC YAML 파일 생성, 배포(jenkins 네임스페이스 만들어서) : 
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+    name: jenkins-pvc
+    namespace: jenkins
+   spec:
+     accessModes:
+       - ReadWriteMany
+     resources:
+       requests:
+       storage: 10Gi
+     storageClassName: nfs-storage-jenkins
+
+2. jenkins yaml파일 수정 : 
+   controller.resources.requests.cpu: "500m"
+   controller.resources.requests.memory: "1Gi"
+   controller.resources.limits.cpu: "1"
+   controller.resources.limits.memory: "2Gi"
+
+   controller.installPlugins:
+     - kubernetes
+     - workflow-aggregator
+     - git
+     - configuration-as-code
+     - blueocean
+     - credentials-binding
+     - pipeline-stage-view
+     - git-parameter
+     - timestamper
+
+   controller.tolerations:
+    - key: "Service"
+      operator: "Equal"
+      value: "app"
+      effect: "NoSchedule"
+
+ingress:
+    enabled: false (임시적. ingress 탈거면 true로 다시 설정 수정)
+
+persistence.enabled: true / existingClaim: jenkins-pvc(미리 만든 pvc) / storageClass: nfs-storage-jenkins (미리 만든 거) / size: "(내가 할당한거)" / dataSource는 다 주석
+
+
+
+
 
 
 
