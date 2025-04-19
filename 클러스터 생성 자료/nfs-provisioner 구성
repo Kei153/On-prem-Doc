@@ -53,6 +53,15 @@ pv : 창고 / pvc : 창고 대여 요청서 / storageclass : 요청서만 보고
 9. helm repo 로 설치 하는데, 설치할 때 (해당 디렉토리의)스토리지 클래스를 만드는 명령어 포함해서 설치
    -- values.yaml 파일을 수정 먼저 한다. nfs.server 에 nfs 서버 주소만 수정 하믄 됨. 나머지는 설치하며 진행
    -- nfs-provisioner.yaml 파일에 설치시 디렉토리 경로 확인 정도 하고 설치
+      (ex) helm install nfs-provisioner-$directory nfs-provisioner/nfs-subdir-external-provisioner \
+        -n nfs-provisioner --create-namespace \
+        -f values-nfs-provisioner.yaml \
+        --version 4.0.18 \
+        --set nfs.path=/data/$directory(nfs 서버의 디렉토리다) \
+        --set nfs.volumeName=nfs-$directory-root \
+        --set storageClass.name=nfs-storage-$directory
+
+
 
 
 ex) pvc 예제로 jenkins를 셋팅해 봄
