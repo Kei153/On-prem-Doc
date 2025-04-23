@@ -1,4 +1,11 @@
-pv : 창고 / pvc : 창고 대여 요청서 / storageclass : 요청서만 보고 알맞은 창고 만들어 주고 연결(규칙/정책 <어떻게 만들지>) / nfs-provisioner : 실제로 PV를 만들어주는 컨트롤러(프로그램)
+** nfs-privisioner는 nfs서버랑 마운트 경로와 연동된 storage class만 만든다.
+   이 storage 클래스를 이용해서 pvc만 있으면 pv 동적으로 할당 됨. pv 따로 만들 필요 없음 **
+
+** 보통 상위 디렉토리 하나만 storage class와 연결하면 pvc. pv 생성시 자동으로 그 밑의 하위 디렉토리를 생성힘.
+laon회사의 경우에는 하위 디렉토리 까지 생성 같이 하여, 데이터를 넣고 있는데..왜? 아무튼 분류를 위해 그런거 같음 **
+
+
+
 
  storageclass 요청서 분석해서 창고 공간 전개도 그리는 건축자나 건축사, nfs-provisioner는 사람이 정해준 거 시킨대로 만드는 기계
 (nfs-provisioner 가 없음 안됨 사람이 요청대로 설계도 짜도 기계없음 창고 못 만듬)
@@ -48,8 +55,8 @@ pv : 창고 / pvc : 창고 대여 요청서 / storageclass : 요청서만 보고
      sudo apt install -y nfs-common  # 모든 노드에서 한 번만 설치
      sudo mount -t nfs <NFS서버IP>:/data/ /nfs (이건 마스터 노드에서만)
      ls /nfs  # → 접근 잘 되면 OK! (이거 test 할려면 nfs 마운트 서버에 뭐라도 있어야 함)
-    (** 중요한 점인데, 마스터 노드에 내가 마운트할 하위 디렉토리 경로는 미리 만들고 helm install 이든 upgrade든 해야함)
-
+   
+(laon 사내 환경의 경우 하위 디렉토리도 시스템 도구에 맞춰 생성하고 그 안에 데이터 저장.)
 9. helm repo 로 설치 하는데, 설치할 때 (해당 디렉토리의)스토리지 클래스를 만드는 명령어 포함해서 설치
    -- values.yaml 파일을 수정 먼저 한다. nfs.server 에 nfs 서버 주소만 수정 하믄 됨. 나머지는 설치하며 진행
    -- nfs-provisioner.yaml 파일에 설치시 디렉토리 경로 확인 정도 하고 설치
@@ -61,52 +68,15 @@ pv : 창고 / pvc : 창고 대여 요청서 / storageclass : 요청서만 보고
         --set nfs.volumeName=nfs-$directory-root \
         --set storageClass.name=nfs-storage-$directory
 
+  9-1. (default)
+     helm install nfs-provisioner-<상위 디렉토리 이름> nfs-provisioner/nfs-subdir-external-provisioner \
+        -n nfs-provisioner --create-namespace \
+        -f values-nfs-provisioner.yaml \
+        --version 4.0.18 \
+        --set nfs.path=/<상위 디렉토리> \
+        --set nfs.volumeName=nfs-<상위 디렉토리> \
+        --set storageClass.name=nfs-storage-<상위 디렉토리 이름>
 
-
-
-ex) pvc 예제로 jenkins를 셋팅해 봄
-
-1. Jenkins PVC YAML 파일 생성, 배포(jenkins 네임스페이스 만들어서) : 
-   apiVersion: v1
-   kind: PersistentVolumeClaim
-   metadata:
-    name: jenkins-pvc
-    namespace: jenkins
-   spec:
-     accessModes:
-       - ReadWriteMany
-     resources:
-       requests:
-       storage: 10Gi
-     storageClassName: nfs-storage-jenkins
-
-2. jenkins yaml파일 수정 : 
-   controller.resources.requests.cpu: "500m"
-   controller.resources.requests.memory: "1Gi"
-   controller.resources.limits.cpu: "1"
-   controller.resources.limits.memory: "2Gi"
-
-   controller.installPlugins:
-     - kubernetes
-     - workflow-aggregator
-     - git
-     - configuration-as-code
-     - blueocean
-     - credentials-binding
-     - pipeline-stage-view
-     - git-parameter
-     - timestamper
-
-   controller.tolerations:
-    - key: "Service"
-      operator: "Equal"
-      value: "app"
-      effect: "NoSchedule"
-
-ingress:
-    enabled: false (임시적. ingress 탈거면 true로 다시 설정 수정)
-
-persistence.enabled: true / existingClaim: jenkins-pvc(미리 만든 pvc) / storageClass: nfs-storage-jenkins (미리 만든 거) / size: "(내가 할당한거)" / dataSource는 다 주석
 
 
 
