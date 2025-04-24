@@ -1,2 +1,16 @@
-cert-manager + Let's Encrypt 조합
+-- 첫번째 방법 :
+cert-manager + Let's Encrypt 조합 (무료 공인 사설 인증서 쓸때)
 Let's Encrypt는 무료로 SSL/TLS 인증서를 발급해주는 **공인 인증 기관(CA)**
+
+-- 두번째 방법 : 유료 공인 인증서를 이용한 tls 설정
+
+실제로 첫번째와 두번째를 셋팅하고 나서 적용하는 방법이 다르다.
+  ex) jenkins values.yaml 내에 ingress 설정
+      ingress:
+        annotations: {}
+          # cert-manager.io/cluster-issuer: "letsencrypt"
+        tls:
+          - secretName: jenkins-ingress-tls
+            hosts:
+              - jenkins.ezplanet.ai
+
