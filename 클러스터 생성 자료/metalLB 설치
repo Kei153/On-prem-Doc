@@ -13,7 +13,7 @@ metalLB 는 k8s 내부에서 도메인 접속을 위해 쓴다. 네트워크 계
                     kubectl delete l2advertisement --all -n metallb-system
 
   3. Helm 레포 갱신 : helm repo update
-  4. 내 k8s 와 버젼 확인
+  4. 내 k8s 와 버젼 확인 (내 kubespray 버젼 - 2.26.0, 2.27.0)
       (내 클러스터 버젼이 넘 높아서 뭔가 좀 일일이 찾아 봐야함. 이번 경우에는 bitnami에서 제공하는 metallb가 호환됐음)
       helm repo add bitnami https://charts.bitnami.com/bitnami
       helm repo update
@@ -50,8 +50,6 @@ metalLB 는 k8s 내부에서 도메인 접속을 위해 쓴다. 네트워크 계
 
             speaker:
               enabled: true
-              nodeSelector:
-                node-role.kubernetes.io/worker: ""
               tolerations:
                 - key: Service
                   operator: Exists
