@@ -1,1 +1,28 @@
+-- values.yaml
+
+controller.resources는 상황에 맞춰서
+controller. tag는 설치 해보고 plug-in 이나 젠킨스 대시보드에서 버젼 up에대한 경고를 볼때 적절히 맞춰서 수정.
+    이번 작성의 경우에는 tag: "2.426.3-jdk17"
+
+controller.serviceType: ClusterIP(ingress 쓸 경우) / LoadBalancer(metalLB)
+
+controller.JCasC.defaultConfig: false (JCasC로 인해 config.xml이 덮어쓰이지 않도록 설정❗️)
+
+controller.ingress.enalbed: true or false
+
+annotations:
+      cert-manager.io/cluster-issuer: letsencrypt (cert-manager 쓸 경우) -둘 중 하나만 골라 선택
+      kubernetes.io/ingress.class: nginx (그냥 ingress-nginx만 쓸 때) -둘 중 하나만 골라 선택
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    ingressClassName: nginx
+    hostName: jenkins.kei.local
+    tls:
+    - secretName: jenkins-tls
+      hosts:
+        - jenkins.kei.local
+
+persistence.enabled: true
+persistence.storageClass: <해당 스토리지 이름>(작업의 경우 nfs-privisioner로 만든 동적 할당 스토리지)
+persistence.size: <알맞게>
+persistence.dataSource, volumes, mounts : 는 nfs 스토리지 쓸 경우에는 다 주석 처리. helm이 알아서 jenkins pv, pvc 생성
 
