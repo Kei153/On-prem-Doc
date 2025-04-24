@@ -60,14 +60,7 @@ metalLB 는 k8s 내부에서 도메인 접속을 위해 쓴다. 네트워크 계
         : controller.serviceAccount.automountServiceAccountToken: true
         :  speaker.automountServiceAccountToken: true
 
-      -- speaker가 마스터에 안 뜨게 하려면 : speaker:
-                                        tolerations: [] (빈값)        
-                                    speaker에 워커 노드만 선택하는 nodeSelector : 
-                                        speaker:
-                                          nodeSelector:
-                                            node-role.kubernetes.io/worker: ""
-
-                                    그 전에 워커 노드에 라벨 붙여줘야 해:
+      -- 그 전에 워커 노드에 라벨 붙여줘야 해:
                                       kubectl label node <worker-node-name> node-role.kubernetes.io/worker=""
 
       -- 헬름 업데이트 : helm upgrade metallb bitnami/metallb \ 
