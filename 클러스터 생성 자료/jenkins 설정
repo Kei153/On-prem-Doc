@@ -8,6 +8,15 @@ controller.serviceType: ClusterIP(ingress 쓸 경우) / LoadBalancer(metalLB)
 
 controller.JCasC.defaultConfig: false (JCasC로 인해 config.xml이 덮어쓰이지 않도록 설정❗️)
 
+controller.additionalPlugins : (플러그인 미리 셋팅)
+    - git:5.1.0
+    - workflow-aggregator:590.v6a_d052e5a_a_b_5
+    - kubernetes:3937.vd7b_82db_e347b_
+    - configuration-as-code:1669.vb_1705b_316e6d
+    - credentials-binding:630.vf652634e5d71
+    - matrix-auth:3.1.8
+    등등... 내 젠킨스 버젼과 맞춰서 태그 맞추기
+
 controller.ingress.enalbed: true or false
 
 annotations:
@@ -25,4 +34,59 @@ persistence.enabled: true
 persistence.storageClass: <해당 스토리지 이름>(작업의 경우 nfs-privisioner로 만든 동적 할당 스토리지)
 persistence.size: <알맞게>
 persistence.dataSource, volumes, mounts : 는 nfs 스토리지 쓸 경우에는 다 주석 처리. helm이 알아서 jenkins pv, pvc 생성
+
+
+
+---------------------------------------------------------------------------------
+** url 접속하면 바로 로그인 화면 나오게 하고 싶다 **
+
+익명 사용자 권한 제거 (Authorization 설정 변경)
+1. Jenkins Web UI 접속 후
+로그인 → Manage Jenkins → Configure Global Security
+
+2. 아래와 같이 설정
+✅ Enable Security: 체크
+
+Security Realm:
+
+Jenkins' own user database 선택
+
+Authorization:
+
+Logged-in users can do anything 선택
+
+익명 사용자(anonymous) 권한 제거
+
+또는 더 강하게:
+Authorization: Matrix-based security 선택
+
+사용자 admin만 모든 권한 부여
+
+anonymous 사용자 권한 전부 해제
+
+3. 저장 후 적용
+
+
+-------------------------------------------------------------------------
+
+** 우측 상단에 로그아웃이나 로그인 버튼이 안 보인다면, **
+
+ 해결 방법: 보안 설정 켜기 (Enable Security)
+좌측 Manage Jenkins → Configure Global Security로 이동
+
+다음 항목 활성화:
+
+plaintext
+복사
+편집
+☑ Enable security
+
+Security Realm:
+  ⚪ Jenkins’ own user database
+     ☑ Allow users to sign up (비추천)
+
+Authorization:
+  ⚪ Logged-in users can do anything
+저장 후 로그아웃/로그인 기능이 생김
+
 
