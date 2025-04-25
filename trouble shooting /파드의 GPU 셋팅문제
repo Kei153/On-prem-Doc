@@ -19,10 +19,14 @@ resources:
     nvidia.com/gpu: '1' # 👈👈
 
 
-이때의 에러는 파드가 할당 받을 노드가 한개도 없다고 로그가 떴었다.
+❗️이때의 에러는 파드가 할당 받을 노드가 한개도 없다고 로그가 떴었다.
 NVDIA-GPU 자원을 할당받기 위해 먼저 선행되어야 하는 작업에는 nvidia driver, gpu operator 가 있다.
 GPU에 자원할당을 못 받아서 파드 에러가 생긴다면 먼저 위의 두개 파드를 재기동 시켜서 정상으로 해본다.
 
+1️⃣ nvdp-non-mps-nvidia-device-plugin 파드 재기동
+kubectl rollout restart -n nvidia-device-plugin daemonset nvdp-non-mps-nvidia-device-plugin
 
-
+2️⃣ material-labeling-segmentam 파드 재기동
+# 네임스페이스는 적용할 zone의 이름을 접두사로 붙여야 함❗️ 👉 👉 dev-material | it-material | prod-material
+kubectl rollout restart -n <branch>-material statefulset material-labeling-segmentam 
 
