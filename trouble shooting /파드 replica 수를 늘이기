@@ -2,3 +2,15 @@
 
 replicas scale은 readinessProbe에 영향이 있기 때문에 values파일에 적용되어 있는지 먼저 확인 한다.
 
+1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣
+
+1️⃣ values.yaml 파일 replicas 갯수 수정한다.
+
+2️⃣ helm update 하고 파드 정상적으로 뜨는지 확인 후, ready 상태면 웹상이든 접속 상태도 확인 한다.
+
+3️⃣ values.yaml 파일에 replicas 적용 부분이 없다면 헬름 차트를 직접 다운 받아서 내용을 까본다. 적용할 부분이 소스에 있는지 없는지
+  -- helm pull <차트 이름> --<사내 해당 버전> (ex)helm pull bitnami/metallb --version 6.3.15
+  -- <차트 이름>.tar 확인 하고 앞축 해제.
+  -- tar -xvf <차트 이름>.tar
+  -- <차트 이름> 디렉토리 안에 들어가서 ls 로 목록 확인 후 deployment.yaml찾기 (경로 : templete > controller > cat deployment.yaml)
+      위의 경로에도 없으면 charts > common > templete
