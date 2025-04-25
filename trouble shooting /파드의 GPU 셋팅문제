@@ -1,1 +1,28 @@
-ㅇㅇ
+-- material-labeling-segmentam 어플리케이션 파드 스케줄링 안되는 문제 해결 방법 ! --
+
+
+
+💡 material-labeling-segmentam 앱은 GPU 자원을 사용하기 때문에 GPU 자원이 준비된 워커 노드에 스케줄링돼야 하는 특징이 있다❗️
+
+
+(ex)manifest file (yaml)
+
+# ✅ 일반적인 파드와 달리 GPU 자원을 요청함
+resources:
+  limits:
+    cpu: '2'
+    memory: 12Gi
+    nvidia.com/gpu: '1' # 👈👈
+  requests:
+    cpu: '1'
+    memory: 12Gi
+    nvidia.com/gpu: '1' # 👈👈
+
+
+이때의 에러는 파드가 할당 받을 노드가 한개도 없다고 로그가 떴었다.
+NVDIA-GPU 자원을 할당받기 위해 먼저 선행되어야 하는 작업에는 nvidia driver, gpu operator 가 있다.
+GPU에 자원할당을 못 받아서 파드 에러가 생긴다면 먼저 위의 두개 파드를 재기동 시켜서 정상으로 해본다.
+
+
+
+
