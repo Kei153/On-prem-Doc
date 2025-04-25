@@ -1,1 +1,4 @@
 * 💡❗️ replica 수를 늘이며 헬름차트 업데이트 할때, kibana의 경우는 secret 토큰 자동 생성이라 기존 secret 지우고 엡뎃 후 재기동 한다.❗️ *
+
+replicas scale은 readinessProbe에 영향이 있기 때문에 values파일에 적용되어 있는지 먼저 확인 한다.
+
