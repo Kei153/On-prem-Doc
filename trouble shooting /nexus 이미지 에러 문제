@@ -1,1 +1,7 @@
-ㄹㄹ
+laon의 현재 컨테이너 레지스트리는 on-premiese의 nexus 이다.
+그러나 nexus는 https 통신을 하지 못 한다. (인증서 적용 불가능)
+그래서 haproxy 역할의 pod를 nuxus 파드 앞단에 두어서 https의 접속을 유도 한다. (nexus 공식 홈페이지의 권장)
+
+이번 트러블 슈팅의 경우 haproxy 역할을 하는 pod의 이미지도 nexus 안에 있는데, nexus 접속이 정상화 되기 전 haproxy 파드가 먼저 떠 버리는 바람에
+이미지를 못 가져와서 imagepullerror 가 났다.
+그래서 로컬에 이미지 다운 받아서 워커노드에 직접 이관
