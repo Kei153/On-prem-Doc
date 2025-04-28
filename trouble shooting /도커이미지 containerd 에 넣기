@@ -1,1 +1,16 @@
-ㅇㅇ
+** 어떤 이유에서 evicted 가 되어 파드가 다른 노드로 이동 되었을때 pending 현상 발생 **
+** 해당 파드에 event, log 를 확인 했을때 Error: ErrImagePull 메시지 확인 **
+(laon의 경우 컨테이너 저장소가 바뀐후, 바뀐 경로가 담긴 pipeline 코드로 재배포가 되지 않아 기존의 컨테이너 저장소를 그대로 바라보고 있었음)
+
+** 위에 상황에 대해 prod 환경에서는 도커이미지 repository 를 변경 하려면 신규 배포를 진행해야 하기 때문에(개발자 외에 배포를 맘대로 할 수가 없음)
+파드가 생성 될 노드에 도커이미지를 로드 하여 문제 해결. **
+
+1. 백업한 컨테이너 이미지 로컬로 다운로드
+2. 다운한 이미지를 파드가 생성 될 노드에 이관(이미 image pull error 난 채로 비정상 파드가 노드에 떠 있음)
+3. 'SFTP'로 로컬에서 파드를 띄울 노드로 이관
+4. 노드에 접속해 아래 명령 수행
+    -- cd /home/laonpeople
+       ctr -n k8s.io images import core-shell-runner_0.3.2.tar
+
+(ctr : containerd의 CLI 툴. / k8s.io : containerd의 namespace. / 이미지 파일이.tar 여야 containerd가 인식함. / 명령어 적용 확인 명령어 : ctr -n k8s.io  images list)
+** 적용할려면 로컬 이미지 먼저 찾은 후 이미지 pull 을 단계별로 하기 위한 deployment 파일의 imagePullPolicy : IfNotPresent 여야 한다 **
