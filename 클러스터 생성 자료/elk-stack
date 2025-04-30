@@ -1,1 +1,211 @@
 ** 내 경우 elastic-apm 부터 설치 해서 elastic-apm 작업부터 기술 ** 
+
+
+* 1️⃣ curl -u <elasticusername>:<elasticpwd> http://<elasticsearch serviceIP>:9200 -k
+      이 명령으로 일단 통신이 되는지 확인해야 함. 외부IP나 clusterIP나 일단 연결 해보기
+      내 경우 apm 파드에서 curl 명령이 안되서 curl pod를 apm 파드와 같은 네임스페이스랑 다른 네임스페이스에서 test해봄
+      데이터에서 작업을 했는데 laon의 경우 마스터는 https 통신만 됐고, 데이터는 http 통신만 됐다. 
+      이부분을 잘 확인하고 apm values 파일에 적용을 한다.
+      values 파일의 'ssl.certificate_authorities:' 이부분 등 https통신 할 때는 어디를 더 수정할지 알아본다. 
+
+
+1. 먼저 artifacthub.io 에서 defaultvalue파일을 다운 받아 온다
+  (ex: 내가 쓴 apm-values파일)
+
+  ---
+# Allows you to add config files
+apmConfig:
+  apm-server.yml: |
+    apm-server:
+      host: "0.0.0.0:8200"
+
+    queue: {}
+
+    output.elasticsearch:
+      hosts: ["http://<elasticsearch-data>:9200"] # ✅ 여기
+        # 1️⃣ 마스터든, 데이터든 어디를 연결해도 상관없으나, 내경우에는 데이터 연결. 위처럼 엘라스틱서치 서비스 이름을 써도 되고, cluterIP나 externalIP 써도 된다. 나는 서비스 이름 씀
+      username: "${ELASTICSEARCH_USERNAME}"
+      password: "${ELASTICSEARCH_PASSWORD}"
+      ## If SSL is enabled
+      # protocol: https
+      # ssl.certificate_authorities:
+      #  - /usr/share/apm-server/config/certs/elastic-ca.pem
+
+replicas: 1
+
+extraContainers: ""
+# - name: dummy-init
+#   image: busybox
+#   command: ['echo', 'hey']
+
+extraInitContainers: ""
+# - name: dummy-init
+#   image: busybox
+#   command: ['echo', 'hey']
+
+# Extra environment variables to append to the DaemonSet pod spec.
+# This will be appended to the current 'env:' key. You can use any of the kubernetes env
+# syntax here
+extraEnvs:
+  - name: "ELASTICSEARCH_USERNAME"
+    valueFrom:
+      secretKeyRef:
+        name: elasticsearch-master-credentials
+        key: username
+  - name: "ELASTICSEARCH_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: elasticsearch-master-credentials
+        key: password
+
+# Allows you to load environment variables from kubernetes secret or config map
+envFrom: []
+# - secretRef:
+#     name: env-secret
+# - configMapRef:
+#     name: config-map
+
+extraVolumeMounts: []
+# - name: extras
+#   mountPath: /usr/share/extras
+#   readOnly: true
+
+extraVolumes: []
+# - name: extras
+#   emptyDir: {}
+
+hostAliases: []
+#- ip: "127.0.0.1"
+#  hostnames:
+#  - "foo.local"
+#  - "bar.local"
+
+image: "docker.elastic.co/apm/apm-server"
+imageTag: "8.5.1"
+imagePullPolicy: "IfNotPresent"
+imagePullSecrets: []
+
+# Whether this chart should self-manage its service account, role, and associated role binding.
+managedServiceAccount: true
+
+podAnnotations: {}
+# iam.amazonaws.com/role: es-cluster
+
+# additionals labels
+labels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsGroup: 0
+
+securityContext:
+  privileged: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 0
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 30
+  failureThreshold: 3
+  periodSeconds: 10
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 30
+  failureThreshold: 3
+  periodSeconds: 10
+  timeoutSeconds: 5
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "100Mi"
+  limits:
+    cpu: "1000m"
+    memory: "512Mi"
+
+# Custom service account override that the pod will use
+serviceAccount: ""
+
+# Annotations to add to the ServiceAccount that is created if the serviceAccount value isn't set.
+serviceAccountAnnotations: {}
+# eks.amazonaws.com/role-arn: arn:aws:iam::111111111111:role/k8s.clustername.namespace.serviceaccount
+
+# A list of secrets and their paths to mount inside the pod
+secretMounts: []
+#  - name: elastic-certificate-pem
+#    secretName: elastic-certificates
+#    path: /usr/share/apm-server/config/certs
+
+terminationGracePeriod: 30
+
+tolerations: # ✅ 
+- key: "Service"
+  operator: "Equal"
+  value: "system"
+  effect: "NoSchedule"
+
+nodeSelector: {}
+
+affinity: {}
+
+# This is the PriorityClass settings as defined in
+# https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+priorityClassName: ""
+
+updateStrategy:
+  type: "RollingUpdate"
+
+# Override various naming aspects of this chart
+# Only edit these if you know what you're doing
+nameOverride: ""
+fullnameOverride: ""
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  averageCpuUtilization: 50
+
+ingress:
+  enabled: false
+  className: "nginx"
+  pathtype: ImplementationSpecific
+  annotations: {}
+  # kubernetes.io/ingress.class: nginx
+  # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+service: # ✅ apm에 접근 할 파드가 외부에 있을 수 있으면 LoadBalancer타입으로 아니면 ClusterIP도 상관 없을 듯 나는 전자를 택함
+  type: LoadBalancer
+  loadBalancerIP: ""
+  port: 8200
+  nodePort: ""
+  annotations: {}
+  # cloud.google.com/load-balancer-type: "Internal"
+  # service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+  # service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+  # service.beta.kubernetes.io/openstack-internal-load-balancer: "true"
+  # service.beta.kubernetes.io/cce-load-balancer-internal-vpc: "true"
+
+lifecycle: {}
+# preStop:
+#   exec:
+#     command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+# postStart:
+#   exec:
+#     command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+
