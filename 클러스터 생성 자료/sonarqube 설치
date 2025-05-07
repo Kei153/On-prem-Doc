@@ -1,1 +1,52 @@
 ** 개발 코드를 공식적으로 test, 코드 커버리지를 위한 오픈 소스 **
+
+sonarqube는 values.yaml 파일만 수정해서 바로 헬름 차트 다운받아 설치하면 values 값이 제대로 적용이 안된다.
+(예로, 나는 toleration 설정이 계속 안 먹혔다.)
+헬름 차트 오픈 소스들 중 가끔 values 적용이 안되는 애들이 있다. 이럴 때는 직접 로컬에 헬름 차트를 다운 받아서 소스를 열어봐야 한다.
+
+이번 경우에 차트 안의 deployment.yaml 파일이 {{- if eq .Values.deploymentType "Deployment" }} 이 걸려 있어서 쓸 수가 없었다.
+values.yaml 파일을 보면 StatefulSet으로 배포하기 때문에, 다른 배포 yaml파일을 찾아야 했다.
+힘들게 찾은 결과 templete 안의 sonarqube-sts.yaml 이라는 파일에 {{- if eq .Values.deploymentType "StatefulSet"}}이 걸려 있는 걸 발견 함
+헬름 차트 배포시 이 파일을 바라보고 배포한다 걸 인식한 후, sonarqube-sts.yaml과 values.yaml 파일을 수정해서 배포했다.
+
+
+
+1. sonarqube-sts.yaml
+    spec > serviceName: {{ template "sonarqube.fullname" . }} 뒤에 -headless #✅ 덧붙임
+    spec > templete > spec 아래에 
+      tolerations: #✅
+        {{ toYaml .Values.tolerations | nindent 8 }}
+      {{- end }} 붙임
+
+2. values.yaml
+    #✅ ingress > hosts > name : <내가 미리 등록해 놓은 도메인> laon의 경우 방화벽 때문에 azure-dns로 clusterIssure 따로 만들어서 그걸 씀
+    #✅ annotations > cert-manager.io/cluster-issuer: "letsencrypt-azure-dns-staging"
+    #✅ tls > secretName: <임의의 이름> hosts: <내가 등록한 도메인>
+    #✅ tolerations:
+          - key: "Service"
+            operator: "Equal"
+            value: "system"
+            effect: "NoSchedule"  #✅ 알맞은 설정
+        initContainers > securityContext >  runAsUser: 1000 / runAsGroup: 1000 # ✅
+        resources: # ✅
+            limits:
+              cpu: 800m
+              memory: 4Gi
+            requests:
+              cpu: 400m
+              memory: 2Gi
+        persistence > storageClass: <내가 nfs-provisioner로 만든 스토리지 이름>
+    #✅ postgresql > primary > tolerations:
+                                  - key: "Service"
+                                    operator: "Equal"
+                                    value: "system"
+                                    effect: "NoSchedule"
+        postgresql > persistence > storageClass: <내가 nfs-provisioner로 만든 스토리지 이름> # ✅
+        
+3. 볼륨이 마운트되는 디렉토리 설정을 아래와 같이 변경해줘야 함.(sonarqube가 꼭 쓰는 user 권한 설정이 잇음)
+    nfs 서버와 마운트 된 master 노드에 가서 > 스토리지 서비스가 만든 디렉토리 경로 기준을 잡고
+      sudo chown -R 1000:1000 /<마운트 경로>
+      sudo chmod -R 755 /<마운트 경로>
+
+      sudo chown -R 1001:1001 /<마운트 경로>/*
+      sudo chmod -R 755 /<마운트 경로>/*
