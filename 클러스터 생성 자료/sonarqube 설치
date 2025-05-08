@@ -92,6 +92,8 @@ persistence > storageClass: <내가 nfs-provisioner로 만든 스토리지 이�
 postgresql: 위와 상동 #✅
 
 
+3.번 과정은 상동
+
 
 -cmd.sh
 
@@ -105,4 +107,68 @@ helm upgrade --install sonarqube sonarqube/sonarqube \
     -f dev-values-sonarqube.yaml \
     --version 2025.1.0 \
     --debug
+
+
+
+---------------------------------------------------------------------------------
+
+- 데이터 이관 -
+
+기존 소나큐브의 헬름 차트 버전과 소나큐브 이미지 버전이 같아야 데이터 충돌이 안일어난다. (충돌이 일면 데이터 이관 후 파드 재기동하다가 back-off 에러 뜸)
+
+** sonarqube-postgresql 정보 **
+
+postgresqlUsername: "sonarUser"
+postgresqlPassword: "sonarPass"
+postgresqlDatabase: "sonarDB"
+
+
+** 운영중인 존에 sonarqube-postgresql 데이터 백업 **
+
+kubectl exec -it -n sonarqube sonarqube-postgresql-0 -- bash
+cd tmp 
+pg_dump -U sonarUser -h localhost -p 5432 sonarDB > /tmp/sonarqube_backup.sql
+
+
+** 운영중인 존에 sonarqube-sonarqube 데이터 백업 **
+
+kubectl exec -it -n sonarqube sonarqube-sonarqube-0 -- bash
+tar czf /tmp/sonarqube_backup.tar.gz -C /opt/sonarqube data extensions
+
+
+** 백업 데이터 로컬로 이동 **
+
+kubectl cp sonarqube/sonarqube-postgresql-0:/tmp/sonarqube_backup.sql ./sonarqube_backup.sql
+kubectl cp sonarqube/sonarqube-sonarqube-0:/tmp/sonarqube_backup.tar.gz ./sonarqube_backup.tar.gz
+
+
+** 신규 구축한 sonarqube-postgresql 에 데이터 이관 **
+
+kubectl cp sonarqube_backup.sql sonarqube/sonarqube-postgresql-0:/tmp/sonarqube_backup.sql
+kubectl exec -it -n sonarqube sonarqube-postgresql-0 -- bash
+psql -U sonarUser -h localhost -p 5432 sonarDB (패스워드는 sonarqube-postgresql 정보 참고)
+# 기존 테이블 삭제
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+\q
+cd /tmp 
+psql -U sonarUser -h localhost -p 5432 sonarDB < sonarqube_backup.sql (패스워드는 sonarqube-postgresql 정보 참고)
+
+
+** 신규 구축한 sonarqube-sonarqube 에 데이터 이관 **
+
+kubectl cp sonarqube_backup.tar.gz sonarqube/sonarqube-sonarqube-0:/tmp/sonarqube_backup.tar.gz
+kubectl exec -it -n sonarqube sonarqube-sonarqube-0 -- bash
+cd /tmp
+tar xvzf sonarqube_backup.tar.gz
+rm -rf /opt/sonarqube/data/*
+mv data/* /opt/sonarqube/data/
+
+
+** sonarqube-sonarqube 파드 재기동 후 db migration 작업 **
+
+kubectl delete pod -n sonarqube sonarqube-sonarqube-0
+kubectl exec -it -n sonarqube sonarqube-sonarqube-0 -- bash
+# (명령어 여러번 수행 하다보면, SUCCESSED 확인)
+curl -X POST -u admin:admin http://localhost:9000/api/system/migrate_db 
 
