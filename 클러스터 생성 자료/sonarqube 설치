@@ -1,4 +1,5 @@
 ** 개발 코드를 공식적으로 test, 코드 커버리지를 위한 오픈 소스 **
+-- 구버전 용 --
 
 sonarqube는 values.yaml 파일만 수정해서 바로 헬름 차트 다운받아 설치하면 values 값이 제대로 적용이 안된다.
 (예로, 나는 toleration 설정이 계속 안 먹혔다.)
@@ -35,13 +36,14 @@ values.yaml 파일을 보면 StatefulSet으로 배포하기 때문에, 다른 �
             requests:
               cpu: 400m
               memory: 2Gi
+        monitoringPasscode: "define_it" # ✅
         persistence > storageClass: <내가 nfs-provisioner로 만든 스토리지 이름>
     #✅ postgresql > primary > tolerations:
                                   - key: "Service"
                                     operator: "Equal"
                                     value: "system"
                                     effect: "NoSchedule"
-        postgresql > persistence > storageClass: <내가 nfs-provisioner로 만든 스토리지 이름> # ✅
+        postgresql > persistence > storageClass: <내가 nfs-provisioner로 만든 스토리지 이름>. # ✅
         
 3. 볼륨이 마운트되는 디렉토리 설정을 아래와 같이 변경해줘야 함.(sonarqube가 꼭 쓰는 user 권한 설정이 잇음)
     nfs 서버와 마운트 된 master 노드에 가서 > 스토리지 서비스가 만든 디렉토리 경로 기준을 잡고
@@ -50,3 +52,57 @@ values.yaml 파일을 보면 StatefulSet으로 배포하기 때문에, 다른 �
 
       sudo chown -R 1001:1001 /<마운트 경로>/*
       sudo chmod -R 755 /<마운트 경로>/*
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+-- 신버전 용(20250508) --
+
+
+위의 단계에서 1번 과정은 스킵한다.
+
+2번 과정이랑 비슷하나 몇가지가 다르다.
+    deploymentStrategy: #✅
+      type: Recreate
+
+    OpenShift: # ✅
+      enabled: false
+      createSCC: false
+# edition: "community" #✅
+
+community: #✅
+  enabled: true # ✅
+  buildNumber: "25.1.0.102122" #✅ 헬름차트 버젼에 맞춤
+
+image:
+  repository: sonarqube
+  # tag: "" #✅ 위의 buildNumber로 삭제
+  pullPolicy: IfNotPresent
+
+ingress: 위와 상동 #✅
+
+tolerations: 위와 상동 #✅
+
+initContainers: 위와 상동 #✅
+
+resources: 위와 상동 #✅
+
+persistence > storageClass: <내가 nfs-provisioner로 만든 스토리지 이름> #✅
+
+postgresql: 위와 상동 #✅
+
+
+
+-cmd.sh
+
+# helm 저장소 추가
+helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
+helm repo update
+
+# helm 차트 설치
+helm upgrade --install sonarqube sonarqube/sonarqube \
+    -n sonarqube --create-namespace \
+    -f dev-values-sonarqube.yaml \
+    --version 2025.1.0 \
+    --debug
+
