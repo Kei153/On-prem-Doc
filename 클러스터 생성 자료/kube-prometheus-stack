@@ -2,3 +2,5 @@
 관련 된 values 설정값을 정할 수 있게 길~게 values 파일을 제공한다.
 모니터링이라, 로그나 apm 에 관련된 건 없음 **
 
+** 팁: 오픈렌즈에서 쓸 모니터링을 위한 거면 prometheus, prometheus-node-exporter / nodeExporter, kubelet, kube-state-metrics 만 설치해도 충분하다 **
+
