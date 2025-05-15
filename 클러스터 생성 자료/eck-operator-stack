@@ -1,4 +1,18 @@
 ** eck-operator-stack 은 elastic 재단의 여러 오픈소스를 한꺼번에 관리해주는 패키지 같은 아이다.
   이 operator를 설치하면 kubectl 명령어를 이용해 yaml 파일로 된 elastic 오픈 소스를 생성, 관리 삭제 가능하다! 아주 편함!!
 
-  
+
+1️⃣ 먼저 artifacthub.io 에 가서 eck-operator.yaml 파일을 다운받는다
+  그러고 필요한 값을 k8s 구성 환경에 맞게 수정한다.
+  operator 경우엔 별다른 설정은 없었고, resources 와 nodeSelector, tolerations 정도만 수정하였다.
+
+2️⃣ cmd.sh를 만들어 업그레이드에 용이하게 한다.
+  helm upgrade --install eck-operator elastic/eck-operator \
+  -n eck --create-namespace \
+  -f values-eck-operator.yaml
+
+  operator가 정상 설치 되고 나면 elastic 오픈소스를 yaml 파일을 이용해 배포 가능해짐
+
+
+3️⃣ 
+
