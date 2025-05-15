@@ -1,0 +1,4 @@
+** eck-operator-stack 은 elastic 재단의 여러 오픈소스를 한꺼번에 관리해주는 패키지 같은 아이다.
+  이 operator를 설치하면 kubectl 명령어를 이용해 yaml 파일로 된 elastic 오픈 소스를 생성, 관리 삭제 가능하다! 아주 편함!!
+
+  
