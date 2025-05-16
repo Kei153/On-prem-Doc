@@ -14,5 +14,93 @@
   operator가 정상 설치 되고 나면 elastic 오픈소스를 yaml 파일을 이용해 배포 가능해짐
 
 
-3️⃣ 
+3️⃣ 먼저,eck-elasticsearch와 eck-kibana를 설치 했다
+elasticsearch 서비스 타입을 LoadBalancer Type으로 한다. api 접근이 있을지도 몰라서...
+
+-------------------------------------------------------------------------
+
+-- elasticsearch.yaml 파일
+  apiVersion: elasticsearch.k8s.elastic.co/v1
+  kind: Elasticsearch
+  metadata:
+    name: elasticsearch
+    namespace: eck
+  spec:
+    version: 8.17.6
+    http:
+      service:
+        spec:
+          type: LoadBalancer
+    nodeSets:
+      - name: master-node
+        count: 3
+        config:
+          node.roles: [ "master" ]
+          node.store.allow_mmap: false
+        podTemplate:
+          spec:
+            tolerations:
+              - key: "Service"
+                operator: "Equal"
+                value: "system"
+                effect: "NoSchedule"
+        volumeClaimTemplates:
+          - metadata:
+              name: elasticsearch-data
+            spec:
+              accessModes: [ "ReadWriteOnce" ]
+              storageClassName: nfs-storage-eck
+              resources:
+                requests:
+                  storage: 10Gi
+  
+      - name: data-node
+        count: 3
+        config:
+          node.roles: [ "data" ]
+          node.store.allow_mmap: false
+        podTemplate:
+          spec:
+            tolerations:
+              - key: "Service"
+                operator: "Equal"
+                value: "system"
+                effect: "NoSchedule"
+        volumeClaimTemplates:
+          - metadata:
+              name: elasticsearch-data
+            spec:
+              accessModes: [ "ReadWriteOnce" ]
+              storageClassName: nfs-storage-eck
+              resources:
+                requests:
+                  storage: 50Gi
+
+
+
+---------------------------------------------------------------------------------------------
+
+4️⃣ 위의 파일만 kubectl apply -f elasticsearch.yaml 해도 관련된 kibana, secret도 설치가 된다.
+  나중에 elasticsearch 에 접속해 작업할 일이 많다면 서비스 : elasticsearch-es-http 의 ip를 접속해서 작업한다.
+
+(ex) 사용자 생성
+-----------------------------------------------------------------------------
+
+curl -X POST https://{ELASTICSEARCH_HOST}:9200/_security/user/admin \
+  -u elastic:엘라스틱비밀번호 \
+  -k \
+  -H "Content-Type: application/json" \
+  -d '{
+    "password": "<비번입력>", 
+    "roles": [ "superuser" ], #✅ role 형태는 상황에 맞춰서 변경
+    "full_name": "<사용자입력>",
+    "email": "<이메일입력>"
+}'
+
+응답 : {"created":true}% 
+
+확인: curl -k -u elastic:<엘라스틱비밀번호> "{ELASTICSEARCH_HOST}:9200/_security/user/admin?pretty"
+  키:값 형태로 나온다.
+
+
 
