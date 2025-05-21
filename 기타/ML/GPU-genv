@@ -1,1 +1,71 @@
-dd
+💡 Genv 를 설치하기 위해서는 사전에 python, docker가 먼저 설치되어 있어야 함❗️ 
+     모든 설치는 사용자 계정을 통해 sudo 권한을 얻어 설치해야 한다 🔥
+
+# package manager update
+sudo apt update
+# check python3 version
+python3 --version
+# python3
+sudo apt install python3.10
+# check pip3 version
+pip3 --version
+# pip3
+sudo apt install python3-pip
+
+
+💡Docker 설치
+https://docs.docker.com/engine/install/ubuntu/
+
+# 도커 daemon 상태 확인
+systemctl status docker.socket
+systemctl status docker.service
+
+
+💡Genv 설치
+# container toolkit 설치
+sudo pip install genv
+# toolkit은 Genv 프로젝트 저장소의 일부이기에 클론을 받아야 함
+git clone https://github.com/run-ai/genv.git $HOME/genv
+# container toolkit components 확인
+ls -la $HOME/genv/genv-docker
+
+
+
+💡도커 service 파일에 설정 추가 및 적용
+# 도커 socker, service 중지
+sudo systemctl stop docker.socket
+sudo systemctl stop docker.service
+# 도커 service 파일 위치 확인
+sudo systemctl status docker.service
+# 도커 service 파일 편집
+sudo vi /path/to/docker.service
+# docker.service 파일에 설정 추가
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock -H 0.0.0.0:2375 --add-runtime genv=/home/laonpeople/genv/genv-docker/genv-container-runtime.py
+# 도커 daemon 파일 편집
+sudo cat /etc/docker/daemon.json
+# daemon.json 파일에 설정 추가 
+{
+  "runtimes": { ✅ 이건 기존에 있는 ndivia 런타임에다 추가하는 방식으로..기존거 지우지 않는다
+    "genv": {
+      "path": "/home/laonpeople/genv/genv-docker/genv-container-runtime.py"
+    }
+  }
+}
+# runtime 추가
+sudo dockerd --add-runtime genv=$HOME/genv/genv-docker/genv-container-runtime.py
+# docker wrapper 설치
+sudo cp -f $HOME/genv/genv-docker/genv-docker.sh /usr/local/bin/genv-docker
+# daemon 재시작
+sudo systemctl daemon-reload
+# 도커 socket, service 재시작
+sudo systemctl restart docker.socket
+sudo systemctl restart docker.service
+# 도커 socket, service 상태 확인
+sudo systemctl status docker.socket
+sudo systemctl status docker.service
+# genv 런타임이 제대로 설정되었는지 테스트
+sudo genv-docker run --rm ubuntu env | grep GENV_
+
+
+
+💡
