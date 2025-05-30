@@ -1,1 +1,35 @@
-ㅇㅇ
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kei-portal
+  namespace: portal
+  labels:
+    app.kubernetes.io/instance: kei-portal
+    app.kubernetes.io/name: kei-portal 
+    clusterzone: com
+    environment: prod
+  annotations: 
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/proxy-body-size: 10240m
+    nginx.org/client-max-body-size: 10240m
+    nginx.ingress.kubernetes.io/server-snippet: |  #✅ portal.kei.com 주소로 접속하면 301 상태값에 대해 https://portal.kei.ai 주소로 리다이렉트
+      if ($host = 'portal.kei.com') {
+        return 301 https://portal.kei.ai$request_uri; #✅ 이 부분만 추가 해주면 될 듯하다. nginx 리디렉션 때도 tls 키는 원래 주소 것 이었음
+      }
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - portal.kei.com
+      secretName: portal.kei.com-tls
+  rules:
+    - host: portal.kei.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portal-kei-web
+                port:
+
