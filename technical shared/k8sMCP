@@ -1,3 +1,48 @@
 -- 25. 06. 10
 
-** mcp 는 
+** mcp는 현재로는 클로드 정도 밖에 지원이 안됨.. 향후 chatgpt도 지원한다고 하니, 추가 업데이트가 될 듯 하다 **
+** 현재로 가장 많이 쓰는 mcp 서버 이미지 두개 중 하나를 골라서 testing 해 보았다. **
+
+도커이미지 : https://hub.docker.com/r/mcp/kubernetes
+* github : https://github.com/Flux159/mcp-server-kubernetes 
+
+1. 먼저 claude 사이트에 가서 로컬 환경에 맞는 desktop 버젼을 다운받아서 설치한다. (나는 macOS 용)
+
+2. github 소스 아래쪽에 사용 설명서에 있듯이, 내 홈 디렉토리에 git 소스 복사 후에 소스 디렉토리에 들어가서 설치 작업을 한다.
+    (이 소스는 node.js로 실행하고, npm대신 bun이라는 툴로 설치 실행 하기에 bun을 또 설치해야 한다.)
+    git clone https://github.com/Flux159/mcp-server-kubernetes.git
+    cd mcp-server-kubernetes
+    bun install
+
+3. 설치 후엔 빌드도 한다. bun run build
+
+4. 제대로 mcp서버가 k8s와 호환이 되는지 test로 inspector 웹브라우저를 띄워 연결 확인한다.
+    mcp가 내 클러스터를 바로 인식 할려면, KUBECONFIG 경로 설정이 잘 되어 있어야 한다.
+    로컬 터미널에서 kubectl로 아무 명령이나 쳐서 잘 되는지 확인해 본다.(mcp는 기본 경로인 ~/.kube/config 이다. 이 default 설정으로 구성되어야 한다.)
+
+npx @modelcontextprotocol/inspector node dist/index.js
+
+    위의 명령으로 connection 잘 되는지 확인. host경로로 접근하는 정보 알려 줌
+
+5. 이제 실행 할 mpc 서버의 위치를 claude에게 알려 주는 작업, config setting을 한다.
+   claude desktop 상단의 메뉴 > claude > 설정 > 개발자 > 설정 편집 버튼 
+    설정에 관한 메뉴가 있는 팝업창이 뜨면 거기서 claude_desktop_config.json 파일을 찾아 더블 클릭으로 연다.
+    처음 mcp서버를 세팅하면 아무 내용도 없다. 거기에 github에서 제공하는 config 설정을 복사해서 붙인다. 
+
+{
+  "mcpServers": {
+    "mcp-server-kubernetes": {
+      "command": "node",
+      "args": ["/path/to/your/mcp-server-kubernetes/dist/index.js"]
+    }
+  }
+}
+
+    ** 나의 경우에 위에서 "mcp-server-kubernetes" > "kubernetes" 로, "/path/to/your/mcp-server-kubernetes/dist/index.js" > "/Users/laonpeople/mcp-server-kubernetes/dist/index.js" 로
+    내 mcp 서버가 설치 된 경로를 맞춰 줬다. **
+
+6. 저장하고, claude desktop을 종료한 후 다시 시작시킨다. 채팅창이 뜨면, 제일 간단한 'kubectl get nodes'부터 한다. 
+    (claude는 current-context를 기준으로 k8s 리소스를 읽거나 작업 한다. 이건 터미널에서 설정 해야 함)
+
+
+
