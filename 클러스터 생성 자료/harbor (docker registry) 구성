@@ -1,0 +1,100 @@
+-- harbor 설치
+
+helm repo add harbor https://helm.goharbor.io
+helm repo update
+
+helm install harbor harbor/harbor \
+    -n harbor --create-namespace \
+    -f values-harbor.yaml \
+    --version 1.17.1
+
+--------------------------------------------------------------------
+
+-- harbor values.yaml 설정
+
+expose:
+  tls:
+    secret:
+      secretName: "harbor-ingress"
+  ingress:
+    hosts:
+        core: dev-harbor.laon-ezplanet.com
+    className: "nginx"
+    annotations:
+      ingress.kubernetes.io/proxy-body-size: "10240m"
+      nginx.ingress.kubernetes.io/proxy-body-size: "10240m"
+      cert-manager.io/cluster-issuer: "letsencrypt-azure-dns"
+
+externalURL: https://dev-harbor.laon-ezplanet.com
+
+persistence:
+  persistentVolumeClaim:
+    registry:
+      storageClass: "nfs-storage-harbor"
+    jobservice:
+      jobLog:
+        storageClass: "nfs-storage-harbor"
+    database:
+      storageClass: "nfs-storage-harbor"
+    redis:
+      storageClass: "nfs-storage-harbor"
+    trivy:
+      storageClass: "nfs-storage-harbor"
+
+harborAdminPassword: "laon0118!@#$"
+
+portal:
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+
+core:
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+
+jobservice:
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+
+registry:
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+
+trivy:
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+
+database:
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+
+redis:
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+
+
+-------------------------------------------------------------------------------
+
+-- harbor 멤버 역할
+
+프로젝트 별로 사용자의 역할을 부여 할 수 있음. 역할 별로 프로젝트에 권한이 다르니, 알맞게 부여 필요
