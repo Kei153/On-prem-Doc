@@ -1,1 +1,208 @@
-cc
+skywalking oap server, ui 설치
+https://artifacthub.io/  에서는 helm chart 를 제공하지 않고, 공식 홈페이지에서 다운로드 가능
+공식 홈페이지 다운로드 URL : https://downloads.apache.org/skywalking/ 
+
+helm chart dependency 다운로드
+
+명령어 : helm dependency build
+
+-- skywalking > values.yaml 파일 설정 -- 
+
+oap:
+  name: oap
+  image:
+    repository: skywalking.docker.scarf.sh/apache/skywalking-oap-server
+    tag: 10.2.0 ==> 최초에 버전이 명시 되어있지 않음
+    pullPolicy: IfNotPresent
+  storageType: elasticsearch ==> 데이터 수집하여 elasticsearch 에 저장
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+  # 데이터 보관 주기
+  env:
+    SW_CORE_RECORD_DATA_TTL: "7"
+    SW_CORE_METRICS_TTL: "7"
+    
+ui:
+  name: ui
+  replicas: 1
+  image:
+    repository: skywalking.docker.scarf.sh/apache/skywalking-ui
+    tag: 10.2.0 ==> 최초에 버전이 명시 되어있지 않음
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-azure-dns"
+    path: /
+    hosts:
+    - dev-skywalking.laon-ezplanet.com
+    tls:
+    - secretName: skywalking-tls
+      hosts:
+       - dev-skywalking.laon-ezplanet.com
+  service:
+    type: LoadBalancer
+    
+oapInit:
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+    
+elasticsearch:
+  enabled: true
+  persistence:
+    enabled: true
+  tolerations:
+  - key: "Service"
+    operator: "Equal"
+    value: "system"
+    effect: "NoSchedule"
+ -----------------------------------------------------------------------------------------------
+
+-- skywalking > charts > elasticsearch > values.yaml
+
+# 여기서 storageClass 설정
+persistence:
+  enabled: true
+  labels:
+    enabled: false
+  annotations: {}
+  storageClass: nfs-storage-skywalking
+
+------------------------------------------------------------------
+
+-- skywalking > charts > elasticsearch > template > statefulset.yaml
+
+# storageClassName 넣는 부분 추가 해주어야 함
+spec:
+  volumeClaimTemplates:
+  - metadata:
+    spec:
+      {{- if .Values.persistence.storageClass }}
+      storageClassName: {{ .Values.persistence.storageClass }}
+      {{- end }}
+
+------------------------------------------------------------------------------
+
+-- skywalking > templates > oap-deployment.yaml
+
+# skywalking 대시보드 수정 가능하도록 환경 변수 설정
+spec:
+  template:
+    spec:
+      containers:
+      - env:
+        - name: SW_ENABLE_UPDATE_UI_TEMPLATE
+          value: "true"
+
+-------------------------------------------------------------------------------
+
+-- helm chart 실행
+
+# 다른 helm chart 와 다르게 버전 명시하지 않음
+helm install skywalking . \
+    -n monitoring --create-namespace \
+    -f values-skywalking.yaml
+
+-------------------------------------------------------------------------
+
+
+** java agent 설정 **
+
+helm chart 에서 init container 를 통해 java 용 agent 를 다운로드 후 container 생성 될 때 해당 agent 를 실행시키는 방식으로 설정
+dev java helm chart 를 기준으로 작성
+
+-- shared-helm-chart > mlaas-java-app > deployment-dev.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+spec:
+  template:
+    metadata:
+    spec:
+      {{- if .Values.apm.enabled }}
+      initContainers:
+        - name: skywalking-agent
+          image: apache/skywalking-java-agent:9.4.0-alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - wget -O /skywalking/agent/plugins/apm-trace-ignore-plugin-9.4.0.jar https://repo1.maven.org/maven2/org/apache/skywalking/apm-trace-ignore-plugin/9.4.0/apm-trace-ignore-plugin-9.4.0.jar && cp -r /skywalking/agent /agent/
+          volumeMounts:
+            - name: skywalking-agent
+              mountPath: /agent
+      {{- end }}
+      containers:
+        - name: "{{ .Values.global.domain }}-{{ .Values.global.service }}-{{ .Values.global.role }}"
+          env:
+            {{- if .Values.apm.enabled }}
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:/skywalking/agent/skywalking-agent.jar -Dskywalking.agent.service_name={{ .Values.global.domain }}-{{ .Values.global.service }}-{{ .Values.global.role }} -Dskywalking.collector.backend_service=skywalking-skywalking-helm-oap.skywalking.svc:11800 -Dskywalking.trace.ignore_path=**/health**"
+            {{- end }}
+          volumeMounts:
+          {{- if .Values.apm.enabled }}
+          - name: skywalking-agent
+            mountPath: /skywalking
+          {{- end }}
+
+
+
+-- shared-helm-chart > mlaas-java-app > values.yaml
+
+# apm 설정 - skywalking 사용
+apm:
+  enabled: false
+
+
+
+-- java apm 적용시 Bitbucket source repository 에 jenkinsenv.yaml 값에 apm enabled: true 추가 후 빌드하면 적용 됨
+
+apm:
+  enabled: true
+
+------------------------------------------------------------------------------------------------
+
+** python agent 설정 **
+
+-- dockerfile 에서 pip 로 agent 라이브러리 설치
+
+pip install apache-skywalking (requirements.txt 에 추가하거나 하기)
+
+-- 코드에서 agent 설정하기
+
+from skywalking import agent, config
+
+config.init(agent_collector_backend_services='10.100.0.162:11800', agent_name='domain-service-role') # 10.100.0.162:11800 는 metalLB로 구현된 skywalking OAP 서버 외부 ip
+agent.start()
+
+
+--------------------------------------------------------------------------------------------------
+
+** node agent 설정 **
+
+-- dockerfile 에서 npm 으로 패키지 설치
+
+npm install --save skywalking-backend-js
+
+-- API Route가 실행 되는 코드에서 agent 설정하기
+
+import agent from 'skywalking-backend-js';
+
+agent.start({
+  serviceName: 'domain-service-role',
+  collectorAddress: '10.100.0.162:11800',
+}); # 10.100.0.162:11800 는 metalLB로 구현된 skywalking OAP 서버 외부 ip
+
+
+
+** UI 접속하여 APM 결과 확인 **
+
