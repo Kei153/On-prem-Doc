@@ -1,0 +1,170 @@
+** 작동 방식 **
+job → api 등록
+각 서비스의 api-docs 파일(openapi 기반 - 스웨거 등등)을 api gateway 에 등록이 가능하도록 파싱 후 등록
+
+
+** api-docs 파일 파싱 및 api 등록을 하기 위한 앱 생성 **
+
+
+-- devops-tools-manager > kong > kong-registry > kong-register.py
+
+import os
+import json
+import requests
+
+# 환경변수에서 Kong Admin API 주소와 OpenAPI Spec URL을 읽음
+KONG_ADMIN_URL = os.getenv("KONG_ADMIN_URL")
+OPENAPI_SPEC_URL = os.getenv("OPENAPI_SPEC_URL")
+
+
+def fetch_openapi_spec(url):
+    print(f"[INFO] Fetching OpenAPI spec from: {url}")
+    resp = requests.get(url)
+    if resp.status_code != 200:
+        raise Exception(f"[ERROR] Failed to fetch OpenAPI spec: {resp.status_code} {resp.text}")
+    return resp.json()
+
+
+def generate_kong_objects_from_openapi(openapi_spec):
+    info = openapi_spec.get("info", {})
+    service_info = info.get("x-service-info", {})
+
+    domain_name = service_info.get("domainName", "default-domain")
+    service_name_raw = service_info.get("serviceName", "default-service")
+
+    # 조합된 서비스 이름
+    service_name = f"{domain_name}-{service_name_raw}".lower()
+    service_url = openapi_spec.get("servers", [{}])[0].get("url", "")
+
+    service = {
+        "name": service_name,
+        "url": service_url
+    }
+
+    routes = []
+    paths = openapi_spec.get("paths", {})
+    for path, methods in paths.items():
+        for method in methods.keys():
+            # 라우트 이름에서 허용되지 않는 문자를 제거 또는 대체
+            safe_path = path.strip('/').replace('/', '-').replace(':', '-')
+            route_name = f"route-{method}-{safe_path}".lower()
+
+            prefixed_path = f"/{domain_name}/{service_name_raw}{path}"
+            
+            route = {
+                "name": route_name,
+                "paths": [prefixed_path],
+                "methods": [method.upper()],
+                "strip_path": False,
+                "service": { "name": service["name"] }
+            }
+            routes.append(route)
+
+    SWAGGER_PATHS = [
+        "/swagger-ui.html",
+        "/webjars/swagger-ui/",
+        "/api-docs",
+        "/swagger-ui/"
+    ]
+
+    for swagger_path in SWAGGER_PATHS:
+        prefixed_path = f"/{domain_name}/{service_name_raw}{swagger_path}"
+
+        route = {
+            "name": f"route-get-swagger-{service_name}-{swagger_path.strip('/').replace('/', '-').replace('.', '')}".lower(),
+            "paths": [prefixed_path],
+            "methods": ["GET"],
+            "strip_path": False,
+            "service": { "name": service["name"] }
+        }
+        routes.append(route)
+
+    return service, routes
+
+
+def register_service(service):
+    url = f"{KONG_ADMIN_URL}/services/"
+    print(f"[INFO] Registering service '{service['name']}' at {url}...")
+    resp = requests.post(url, json=service)
+    if resp.status_code in [200, 201]:
+        print(f"[SUCCESS] Service '{service['name']}' registered successfully.")
+    elif resp.status_code == 409:
+        print(f"[WARNING] Service '{service['name']}' already exists.")
+    else:
+        print(f"[ERROR] Failed to register service '{service['name']}': {resp.status_code} {resp.text}")
+
+
+def register_route(route):
+    url = f"{KONG_ADMIN_URL}/routes/"
+    print(f"[INFO] Registering route '{route['name']}' at {url}...")
+    data = route.copy()
+    data["service"] = { "name": route["service"]["name"] }
+    resp = requests.post(url, json=data)
+    if resp.status_code in [200, 201]:
+        print(f"[SUCCESS] Route '{route['name']}' registered successfully.")
+    elif resp.status_code == 409:
+        print(f"[WARNING] Route '{route['name']}' already exists.")
+    else:
+        print(f"[ERROR] Failed to register route '{route['name']}': {resp.status_code} {resp.text}")
+
+
+if __name__ == "__main__":
+    if not KONG_ADMIN_URL:
+        raise EnvironmentError("환경변수 'KONG_ADMIN_URL'이 설정되지 않았습니다.")
+    if not OPENAPI_SPEC_URL:
+        raise EnvironmentError("환경변수 'OPENAPI_SPEC_URL'이 설정되지 않았습니다.")
+
+    openapi_spec = fetch_openapi_spec(OPENAPI_SPEC_URL)
+    service, routes = generate_kong_objects_from_openapi(openapi_spec)
+
+    register_service(service)
+    for route in routes:
+        register_route(route)
+
+
+
+--------------------------------------------------------------------------------------------------
+
+-- 위에서 생성한 코드를 실행하는 도커이미지 생성
+
+docker build -t docker-registry.ezplanet.ai:5000/kong-registry:1.0.0 --platform linux/amd64 .
+docker push docker-registry.ezplanet.ai:5000/kong-registry:1.0.0
+
+
+----------------------------------------------------------------------------------
+
+-- java 서비스 배포시 kong gateway 에 api 등록이 될 수 있도록 helm chart 에 job 추가 (dev 기준으로 작성)
+-- shaerd-helm-chart > mlaas-java-app > templates > job-kong-registry.yaml
+
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "job-kong-registry-{{ .Values.environment }}-{{ .Values.global.domain }}-{{ .Values.global.service }}-{{ .Values.global.role }}"
+  namespace: "{{ .Values.environment }}-{{ .Values.global.domain }}"
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      tolerations:
+      - key: Service
+        operator: Equal
+        value: app
+        effect: NoSchedule
+      containers:
+      - name: kong-registry
+        image: docker-registry.ezplanet.ai:5000/kong-registry:1.0.0
+        env:
+        - name: KONG_ADMIN_URL
+          value: "https://dev-kong-admin.laon-ezplanet.com"
+        - name: OPENAPI_SPEC_URL
+          value: "http://{{ .Values.environment }}-{{ .Values.global.domain }}-{{ .Values.global.service }}-{{ .Values.global.role }}.laon-ezplanet.com:8080/{{ .Values.global.domain }}/{{ .Values.global.service }}-{{ .Values.global.role }}/api-docs"
+      restartPolicy: Never
+  backoffLimit: 2
+
+
+------------------------------------------------------------------------------------------------------------------
+
+
