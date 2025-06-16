@@ -1,0 +1,30 @@
+여러 방법 중 내가 선택한 방법은 디렉토리 별로 작업을 나누는 구조이다.
+그 후 여러 작업으로 조인할 경우엔 상위 통합 디렉터리 생성 + module로 include 방법으로 기본 구성을 하였다.
+
+terraform/
+├── namespace/
+│   └── main.tf
+├── deployment/
+│   └── main.tf
+├── service/
+│   └── main.tf
+├── app/
+│   └── main.tf    # 이곳에서 deployment + service 를 호출
+...
+
+  - app/main.tf # 여러 조합을 실행하는 디렉토리
+
+module "deployment" {
+  source = "../deployment"
+}
+
+module "service" {
+  source = "../service"
+}
+
+- 실행
+
+cd terraform/app
+terraform init
+terraform apply
+
