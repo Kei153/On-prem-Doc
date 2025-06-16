@@ -1,0 +1,48 @@
+** minikube 구성하기. 간단하게 k8s 테스트 환경을 재빨리 만들어서 쓰기 유용하다 **
+** 로컬에서 직접 돌리지 않고, 가상화 환경에서 돌렸다. linux-arm64 --release version=22로 돌렸다. **
+
+#도커 설치. (minikube 클러스터 실행을 docker 데몬으로 실행 할 거니까)
+sudo apt-get update
+sudo apt-get install -y docker.io
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+
+
+# 최신 버전 다운로드 (Linux 예시)
+curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-arm64
+
+# 실행 파일로 설치
+sudo install minikube-linux-arm64 /usr/local/bin/minikube
+rm minikube-linux-arm64
+
+# minikube 설치 확인
+minikube version
+
+
+
+# kubectl 설치
+# 최신 버전 다운로드
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+# kubectl 설치 확인
+kubectl version --client
+
+# 설치 후 실행 권한이 없으면 아래 명령어로 권한을 부여할 수 있습니다:
+chmod +x kubectl
+
+# Minikube 클러스터가 실행 중인지 확인
+minikube status
+
+# minikube 시작
+minikube start --driver=docker
+
+# 설치 및 실행 확인
+Minikube 버전 확인:
+minikube version
+클러스터 상태 확인:
+kubectl cluster-info
+노드 확인:
+kubectl get nodes
+
+# 클러스터가 정상적인지 확인
+kubectl get nodes
