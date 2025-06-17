@@ -1,0 +1,22 @@
+VSCode github copilot을 이용한 MCP서버 사용
+(챰고 : https://changsroad.tistory.com/571#2.%20VSCode%20MCP%20server%20Setting-1-5)
+
+1. 먼저 vscode와 copilot을 extention으로 다 구성해준다. 
+copilot 채팅을 켜면 화면 하단에 채팅창이 있는데 창에서 ask나 agent를 고를 수 있고 LLM도 선택할 수 있다. 
+(MCP는 agent 선택)
+
+2. vscode의 메뉴에 가서 code > prefernces > settings 경로로 가면 settings found라는 검색창이 뜬다.
+검색창에 mcp를 입력한다.
+거기에서 모든 걸 enabled로 설정한다. 
+
+3. 나 같은 경우는 간단히 smithery 사이트가서 mcp 세팅을 하였다. githubMCP중 가장 많이 다운 받은거 골르면 된다.
+MCP세팅 명령어나 json 받을려면 연동할 api 있어야 한다. githubMCP이니까 나의 github가서 token 생성을 한다.
+(token 세팅 : 프로필 아이콘 클릭 > settings > developer settings > Personal access tokens > Tokens(classic) 으로 만든다.)
+
+4. 토큰을 smithery 사이트에서 선택한 githubMCP에 들어오면 화면에 'install'이 있다. auto든 josn이든 선택하고, token넣는 창에 github 토큰을 복사하면 결과 값이 나온다. (이번 경우에는 auto를 선택 했다. 터미널에서 바로 실행할 수 있다.)
+
+5. vscode 터미널 창에서(왠만하면 git repo와 연결된 경로) 명령어 결과값을 복사해서 실행시키면 settings.json파일이 화면에 뜬다. 이미 명령어 실행으로 github-MCP가 추가되어 있다.
+
+6. 이제 MCP서버를 사용하면 된다. copilot 채팅창에서 하고 싶은 작업을 test한다.
+
+** p.s : vscode를 완전 종료했다가 다시 켜서 agent 를 실행시키면 채팅창안에 서버모양 아이콘과 함께, server를 실행시키는 파란 버튼이 활성화 된다. 켜서 또 쓰면 된다.
