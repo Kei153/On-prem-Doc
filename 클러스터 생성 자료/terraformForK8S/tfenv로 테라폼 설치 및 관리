@@ -64,6 +64,39 @@ terraform init -upgrade
 로 다시 실행해보면 업데이트 된 것을 확인 할 수 있다.
 
 
+------------------------------------------------------------------------
 
+🔌 프로바이더 별칭 추가와 활용
+
+[main.tf](http://main.tf) 의 프로바이더 설정에 별칭을 추가하면 프로바이더 설정을 선택해서 리소스 생성 가능하다.
+
+alias를 이용해서 여러개의 프로바이더를 등록해 선택해서 프로바이더 쓸 수 있다.
+
+`provider "azurerm" {`
+
+`subscription_id = "xxxxxxx......"`
+
+`alias = "kei1"
+features {}
+}`
+
+`provider "azurerm" {`
+
+`subscription_id = "xxxxxxx......"`
+
+`alias = "kei2"`
+
+`features {}`
+
+`}`
+
+`module "resourcegroup" {
+source = "../resourcegroup"`
+
+`provider = azurerm.kei1   # =>이런식으로 값을 넣어서 프로바이더 선택해서 리소스 생성 가능`
+
+`resource_group_name = var.resource_group_name
+location           = var.location
+}`
   
 
