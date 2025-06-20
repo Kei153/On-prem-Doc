@@ -1,18 +1,24 @@
-여러 방법 중 내가 선택한 방법은 디렉토리 별로 작업을 나누는 구조이다.
+여러 방법 중 내가 선택한 방법은 디렉토리 별로 작업을 나누는 구조이다. (모듈화 작업)
 그 후 여러 작업으로 조인할 경우엔 상위 통합 디렉터리 생성 + module로 include 방법으로 기본 구성을 하였다.
 
-terraform/
-├── namespace/
-│   └── main.tf
-├── deployment/
-│   └── main.tf
-├── service/
-│   └── main.tf
-├── app/
-│   └── main.tf    # 이곳에서 deployment + service 를 호출
-...
+-- 기본 구조 --
 
-  - app/main.tf # 여러 조합을 실행하는 디렉토리
+terraform/
+├── app/ # 여러 조합을 실행하는 디렉토리
+│   └── main.tf # 이곳에서 deployment + service 를 호출
+│   └── outputs.tf
+│   └── terraform.tfvars
+│   └── variables.tf
+├── deployment/ # 모듈화 (app 디렉토리에서 실행하고 변수값을 주기에 모듈로 쓸 디렉토리에는 tfvars파일이 필요 없다)
+│   └── main.tf
+│   └── outputs.tf
+│   └── variables.tf
+├── service/ # 모듈화 (app 디렉토리에서 실행하고 변수값을 주기에 모듈로 쓸 디렉토리에는 tfvars파일이 필요 없다)
+│   └── main.tf
+│   └── outputs.tf
+│   └── variables.tf
+
+...
 
 module "deployment" {
   source = "../deployment"
@@ -27,4 +33,51 @@ module "service" {
 cd terraform/app
 terraform init
 terraform apply
+
+----------------------------------------------------------------------------------------------
+
+variables.tf 파일에 변수 설정 시에 검증 과정(validation)을 추가하면 유효성 검사가 가능하다.
+
+(ex)
+variable "location" {
+  description = "The Azure region to deploy resources"
+  type        = string
+  💡validation {
+    condition = contains(["koreacentral", "westeurope"], var.location)
+    error_message = "The location must be koreacentral or westeurope."
+  }
+}
+
+------------------------------------------------------------------------------------------
+
+variables.tf 파일에 민감 변수를 설정하는 방법도 있다. 이 설정으로 terraform 실행시 output으로 plaintext가 아니라, 
+(sensitive) 로 출력이 된다. 
+
+(ex)
+variable "location" {
+  description = "The Azure region to deploy resources"
+  type        = string
+  💡sensitive = true
+}
+
+----------------------------------------------------------------
+
+민감 변수는 CI/CD 까지 고려하면 환경변수 사용 방법이 가장 추천 된다.
+
+(ex)
+# TF_VAR_ 접두사 사용 ❗️접두사 시작 중요함!
+export TF_VAR_database_password="super_secret_password"
+export TF_VAR_api_key="sk-1234567890abcdef"
+💡terraform plan 명령 전에 설정해야 한다.
+
+(ex2) -💡 보안 모범 사례, 가장 안전
+-- 파일명 set-terraform-vars.sh 이라는 파일을 만들면
+#!/bin/bash
+
+# CI/CD에서 보안 저장소에서 가져오기 (젠킨스에서 pipeline에 설정 값으로 받는 다던지...)
+export TF_VAR_database_password="${VAULT_DB_PASSWORD}"
+export TF_VAR_api_key="${VAULT_API_KEY}"
+
+# Terraform 실행
+terraform plan
 
