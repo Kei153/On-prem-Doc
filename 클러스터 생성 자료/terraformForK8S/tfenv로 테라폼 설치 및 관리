@@ -1,3 +1,5 @@
+** 테라폼 설치 및 버전 관리 **
+
 테라폼 설치는 여러가지 방법이 있다.
 (윈도우 수동 설치, 윈도우 chocolatey를 사용한 설치, apt 패키지 매니저를 이용한 설치, 도커 컨테이너로 띄우는 설치 등등..)
 
@@ -24,8 +26,8 @@ source ~/.bashrc
   tfenv --version
 
 3. Terraform 설치 예시
-  tfenv install latest        # 최신 버전 설치 (특정 버전을 원한다면 use 뒤에 버전 태그 쓰면 된다.)
-  tfenv use latest            # 설치한 최신 버전 사용 (특정 버전을 원한다면 use 뒤에 버전 태그 쓰면 된다.)
+  tfenv install latest        # 최신 버전 설치 (특정 버전을 원한다면 use 뒤에 버전 숫자 쓰면 된다.)
+  tfenv use latest            # 설치한 최신 버전 사용 (특정 버전을 원한다면 use 뒤에 버전 숫자 쓰면 된다.)
   terraform -v                # 적용된 Terraform 버전 확인
 
 4. ftenv 기본 명령어
@@ -33,7 +35,33 @@ source ~/.bashrc
   tfenv list-remote : 설치 가능한 테라폼 버젼들 내역
   tfenv uninstall <버전> : 설치된 테라폼 버전 삭제
 
+fs : 1. default 테라폼을 쓰고 싶지 않은 파일이 있다면, 실행 할 main.tf 파일이 있는 디렉토리의 상위에 .terraform-version 파일을 생성해, 파일 내용에 버전 숫자를 명시한다.
+      명시 후 해당 디렉토리에 terraform version 입력하면 명시한 숫자가 뜰 것이다.
+     2. CI/CD 파이프라인 과정등등 환경변수를 설정할 수 도 있다. TFENV_TERRAFORM_VERSION 키로 버전 숫자 값을 넣으면 된다. 
+-----------------------------------------------------------------------------------
 
+** 프로바이더 버전 관리 **
+
+
+보통 main.tf 파일에 명시하는 프로바이더 부분을 수정 함으로써 버전 관리가 가능하다
+
+(ex) 
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0" => 여기 숫자를 변경함으로 버전 관리 끝
+    }
+  }
+}
+....
+
+
+저장 후 terraform init 하게 되면 .terraform.lock.hcl의 해시 및 버전 정보가 안 맞아 에러 메세지가 뜬다.
+
+terraform init -upgrade
+
+로 다시 실행해보면 업데이트 된 것을 확인 할 수 있다.
 
 
 
