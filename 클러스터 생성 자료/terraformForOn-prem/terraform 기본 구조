@@ -87,3 +87,20 @@ terraform plan
  yaml 파일 사용해서 테라폼 구성해보기
 
 
+---------------------------------------------------------------------
+
+테라폼에서 종종 쓰이는 3항 연산자 조건문
+
+(ex) var.environment == "Production" ? upper(format("RG-%s", var.appname)) : upper(format("RG-%s-%s", var.app-name, var.environment))
+
+var.environment == "Production" >> 조건: 환경이 "Production"인지 확인
+? >> 조건이 참일 경우 실행할 표현식 시작
+upper(format("RG-%s", var.appname)) >> "Production"일 경우 → "RG-앱이름"을 대문자로 반환
+: >> 조건이 거짓일 경우 실행할 표현식 시작
+upper(format("RG-%s-%s", var.app-name, var.environment)) >> "Production"이 아닐 경우 → "RG-앱이름-환경"을 대문자로 반환
+
+
+
+
+
+
