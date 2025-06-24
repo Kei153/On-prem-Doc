@@ -80,3 +80,10 @@ export TF_VAR_api_key="${VAULT_API_KEY}"
 
 # Terraform 실행
 terraform plan
+
+
+------------------------------------------------------------------------
+
+ yaml 파일 사용해서 테라폼 구성해보기
+
+
