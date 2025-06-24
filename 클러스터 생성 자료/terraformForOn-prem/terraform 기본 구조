@@ -86,6 +86,36 @@ terraform plan
 
  yaml 파일 사용해서 테라폼 구성해보기
 
+--main.tf
+
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+locals { 💡여기서 적용
+  config = yamldecode(file("${path.module}/resource.yaml"))
+}
+
+resource "azurerm_resource_group" "RG" {
+  name     = upper(format("KEI-%s", local.config.RG))
+  location = local.config.location
+}
+
+
+--resource.yaml (같은 디렉토리 안에 위치한다)
+
+RG: "terraform-rg"
+location: "koreacentral"
+
 
 ---------------------------------------------------------------------
 
@@ -145,7 +175,6 @@ variable "env" {
 
 -------------------------------------------------------------------------
 
-패스워드 생성하기
 
 
 
