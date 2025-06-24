@@ -100,6 +100,48 @@ upper(format("RG-%s", var.appname)) >> "Production"일 경우 → "RG-앱이름"
 upper(format("RG-%s-%s", var.app-name, var.environment)) >> "Production"이 아닐 경우 → "RG-앱이름-환경"을 대문자로 반환
 
 
+적용 방법
+--main.tf 
+
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "RG" {
+  name     = var.env == "prod" ? upper(format("KEI-%s",var.azurerm_resource_group.name)) : upper(format("KEI-%s-%s",var.env,var.azurerm_resource_group)) 
+  location = var.location
+}
+
+
+--variables.tf
+
+variable "resource_group_name" {
+  description = "The name of the resource group"
+  type        = string
+  default     = "terraform-rg"
+}
+
+variable "location" {
+  description = "The Azure region to deploy resources"
+  type        = string
+  default     = "koreacentral"
+}
+
+variable "env" {
+  description = "separated for develop"
+  type        = string
+  default     = "dev"
+}
+
 
 
 
