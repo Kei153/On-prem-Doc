@@ -5,14 +5,66 @@ prometheus에서 수집된 지표를 기반으로 스케일링을 할 수 있다
 ; keda는 prometheus-adapter를 사용하여 prometheus에서 수집된 지표를 기반으로 스케일링을 할 수 있다.
 
 기본 구성은 keda-operator, metrics-apiserver, webhooks 이다.
-keda-operator : keda의 핵심 컴포넌트로, 스케일링 작업을 수행하고
+✅ keda-operator : keda의 핵심 컴포넌트로, 스케일링 작업을 수행하고
                  Deployment 리소스로 배포, metrics-apiserver와 통신하여 custom metrics를 수집한다.
                  keda-operator는 스케일링 작업을 수행하기 위해 k8s의 HPA와 통신한다.
-metrics-apiserver : k8s의 custom metrics API를 제공하는 컴포넌트로, prometheus-adapter와 통신하여 prometheus에서 수집된 지표를 k8s의 custom metrics API로 변환한다.
-webhooks : keda-operator와 metrics-apiserver 간의 통신을 위한 웹훅이다.
+✅ metrics-apiserver : k8s의 custom metrics API를 제공하는 컴포넌트로, prometheus-adapter와 통신하여 prometheus에서 수집된 지표를 k8s의 custom metrics API로 변환한다.
+✅ webhooks : keda-operator와 metrics-apiserver 간의 통신을 위한 웹훅이다.
             keda-operator는 metrics-apiserver에 custom metrics를 요청하고, metrics-apiserver는 prometheus-adapter에 요청하여 prometheus에서 수집된 지표를 가져온다.
 prometheus-adapter : Prometheus에서 수집한 메트릭을 Kubernetes HPA나 다른 컨트롤러가 사용할 수 있도록 Kubernetes API로 노출
-                    kube-prometheus-stack 등에서 별도의 컴포넌트로 설치되며, Prometheus와 연동됩니다.
+                    kube-prometheus-stack 에서 별도의 컴포넌트로 설치되며, Prometheus와 연동됩니다.
 
 
+1. artifacthub.io에서 keda를 써치하여 helm chart로 배포하는 소스를 찾는다.
+    (현재 v2.17.2 까지 나와 있으며 이 버전으로 설치하였다.)
+
+2. values.yaml파일을 다운받고 적절히 수정한다.
+    (프로메데우스에 keda의 api 집계를 하기 위해 설정을 하였다.)
+    - prometheus.metricServer.enabled: true ✅
+    - prometheus.metricServer.serviceMonitor.enabled: true ✅
+    - prometheus.metricServer.serviceMonitor.interval: "15s" # ✅
+    - prometheus.metricServer.serviceMonitor.additionalLabels.release: kube-prometheus-stack # ✅ 나는 prometheus를 kube-prometheus-stack을 이용하였다
+    - prometheus.operator.enabled: true # ✅
+    - prometheus.operator.serviceMonitor.enabled: true # ✅
+    - prometheus.operator.serviceMonitor.interval: "15s" # ✅
+    - prometheus.operator.serviceMonitor.additionalLabels.release: kube-prometheus-stack # ✅
+    - prometheus.webhooks.enabled: true # ✅
+    - prometheus.webhooks.serviceMonitor.enabled: true # ✅
+    - prometheus.webhooks.serviceMonitor.interval: "15s" # ✅
+    - prometheus.webhooks.serviceMonitor.additionalLabels.release: kube-prometheus-stack # ✅
+
+    - nodeSelector와 tolerations는 상황에 맞게 설정 해준다. # ✅
+
+3. 필요하다면 github에 가서 헬름 차트도 받을 수 있다.
+    https://github.com/kedacore/charts/releases/tag/v2.17.2
+
+4. 터미널에서 명령어로 설치한다.
+    -- cmd.sh
+    #!/bin/bash
+    helm repo add kedacore https://kedacore.github.io/charts
+    helm repo update
+
+    helm install keda kedacore/keda \
+    -n keda --create-namespace \
+    -f values-keda.yaml
+
+5. 설치가 완료되면 keda-operator, metrics-apiserver, webhooks가 정상적으로 동작하는지 확인한다.
+
+6. cpu나 memory등 기본 지표로 HPA가 설정되는지 test 해본다.
+    (ex) scaled-cpu.yaml
+    apiVersion: keda.sh/v1alpha1
+    kind: ScaledObject
+    metadata:
+    name: scale-by-cpu
+    namespace: kei-test # 내가 타겟으로 잡은 리소스(여기선 deployment.apps) 가 있는 네임스페이스로 설정해야 함
+    spec:
+    scaleTargetRef:
+        name: #<내가 스케일링하고 싶은 deployment 이름>
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    triggers:
+        - type: cpu
+        metadata:
+            type: Utilization      # or AverageValue
+            value: "70"            # if CPU is over 70%, scale up
                 
