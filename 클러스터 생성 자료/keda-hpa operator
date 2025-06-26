@@ -1,0 +1,13 @@
+keda는 metric-server를 이용한 기본 지표 cpu, memory 외에도 prometheus와의 연동을 통해
+prometheus에서 수집된 지표를 기반으로 스케일링을 할 수 있다.
+; keda는 prometheus와의 연동을 위해 prometheus-adapter를 사용한다
+; prometheus-adapter는 prometheus에서 수집된 지표를 k8s의 custom metrics API로 변환해주는 역할을 한다.
+; keda는 prometheus-adapter를 사용하여 prometheus에서 수집된 지표를 기반으로 스케일링을 할 수 있다.
+
+기본 구성은 keda-operator, metrics-apiserver, webhooks 이다.
+keda-operator : keda의 핵심 컴포넌트로, 스케일링 작업을 수행하고
+                 Deployment 리소스로 배포, metrics-apiserver와 통신하여 custom metrics를 수집한다.
+                 keda-operator는 스케일링 작업을 수행하기 위해 k8s의 HPA와 통신한다.
+metrics-apiserver : k8s의 custom metrics API를 제공하는 컴포넌트로, prometheus-adapter와 통신하여 prometheus에서 수집된 지표를 k8s의 custom metrics API로 변환한다.
+webhooks : keda-operator와 metrics-apiserver 간의 통신을 위한 웹훅이다.
+            keda-operator는 metrics-apiserver에 custom metrics를 요청하고, metrics-apiserver는 prometheus-adapter에 요청하여 prometheus에서 수집된 지표를 가져온다.
