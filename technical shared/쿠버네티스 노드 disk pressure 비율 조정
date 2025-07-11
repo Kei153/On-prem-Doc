@@ -1,0 +1,20 @@
+쿠버네티스에서 기본적으로 노드가 disk pressure 발생하는 비율을 조정한다. (기본 90%)
+
+1. kubelet 프로세스가 어떤 conf 파일을 참조 하는지 확인
+ps -ef|grep kubelet
+
+
+2. 확인 된 위치에 아래 내용 추가
+  vi /etc/kubernetes/kubelet-config.yaml
+
+  evictionHard:
+  imagefs.available: 2%
+  memory.available: 100Mi
+  nodefs.available: 2%
+  nodefs.inodesFree: 2%
+
+  100% 로 지정하지 않는 이유는 디스크 공간이 완전히 소진되면 시스템 전체가 불안정해질 수 있다.
+  또한 로그 파일 쓰기가 불가능해져 문제 해결이 어려워질 수 있다.
+
+3. kubelet 재시작
+  systemctl restart kubelet
