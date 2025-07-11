@@ -1,0 +1,49 @@
+헬름 차트로 argocd를 설치 하여 보았다
+헬름은 여러가지 구성이 필요하다. 사전에 뭐가 필요한지 알아보자
+
+Argocd 구성 파드들 : (laon기준이다. 저장소는 redis만 필요했음.)
+— argocd-application-controller-0 : 핵심 파드. Application 상태 추적 및 동기화. 쿠버네티스 상태와 Git 상태를 비교하여 자동 또는 수동으로 sync 실행. 저장소 필요❌
+— argocd-applicationset-controller-58cd855c69-vgnqz : ApplicationSet 리소스를 처리. 여러 애플리케이션을 한 번에 관리하고 동기화. 저장소 필요❌
+— argocd-applicationset-controller-58cd855c69-wjztz
+— argocd-dex-server-5d5cc5b99b-c8jxb : OIDC 인증 서버 (Dex). SSO (Single Sign-On) 인증 담당. LDAP, GitHub, SAML 등과 연동 가능.저장소 필요❌
+— argocd-notifications-controller-6b7bd57f55-tqr9s : 알림 기능. Slack, 이메일 등으로 애플리케이션 상태 변경 시 알림 발송. 저장소 필요❌
+— argocd-redis-ha-haproxy-76457dd5cc-bmghd : Redis 접근을 위한 HAProxy. Redis 서버로의 프록시 역할. 저장소 필요❌
+— argocd-redis-ha-haproxy-76457dd5cc-p89v4
+— argocd-redis-ha-haproxy-76457dd5cc-vfjsq
+— argocd-redis-ha-server-0 : Argo CD 내부 캐시, 세션 저장소로 사용. 💡저장소 필요
+— argocd-redis-ha-server-1
+— argocd-redis-ha-server-2
+— argocd-repo-server-fb9d68f97-nr548 : 핵심 파드. Git 리포지토리와 통신, 매니페스트 렌더링. Helm등 템플릿을 처리, 결과를 application-controller에 전달. 저장소 필요❌
+— argocd-repo-server-fb9d68f97-q9qn5  : 핵심 파드. 
+— argocd-server-7b889c747d-68gj7 : 핵심 파드. 웹 UI 및 API 서버. 여기로 접속하여 UI/CLI/API로 애플리케이션을 관리. 저장소 필요❌
+— argocd-server-7b889c747d-jc7rm : 핵심 파드. 
+
+
+** 첫번째 구성은 nfs-provisioner로 사전에 redis와 연동할 스토리지 서비스를 만들어야 한다.
+** 라온은 마스터의 /data 경로와 nas가 연동 되어 잇어서 마스터의 /data 경로 하위 디렉토리로 argocd 만들었다.
+
+storageService를 만들고 나면 후에 values-yaml파일에서 가져다 쓰기
+
+
+-- cmd.sh
+
+#!/bin/bash
+# helm 저장소 추가
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+
+# helm 차트 설치 (version 7.6.5)
+helm upgrade --install argocd argo/argo-cd \
+    -n test \
+    -f values-argocd.yaml \
+    --version 7.6.5
+
+
+설치후 deploy 완료되면
+터미널에 안내된 대로 argocd-initial-admin-secret 이 secret을 조회해 최초의 비밀번호 확인하고, UI로 접속하여 admin/<초기 비밀번호>로 접속
+그 후에 userinfo 에 가서 admin 비번 맘에 드는걸로 바꾸면 된다.
+
+아르고씨디 setting은 여러개 중 먼저 cluster를 등록해야 한다.
+cluster에 가면 먼저 in-cluster가 status unknown 상태로 되어 있을 것이다.
+먼저, 아무거나 test app을 만들어서 (상태는 굳이 success가 아니어도 된다.) in-cluster 상태를 다시 확인한다.
+(뭐라도 리소스가 있어야 argocd에 등록된 클러스터가 상태가 변경되기 때문)
