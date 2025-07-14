@@ -1,2 +1,10 @@
 폐쇄망이라 cert-manager를 통해 인증서 관리 어려울 때 (cert로 외부를 나가든 아니면 기존 azure dns를 이용하든)직접 수동 업데이트 해줘야한다.
 
+-- 최초로 인증서 생성시 cert.sh 생성 후 실행
+(ex) 
+kubectl create secret tls porptal-member-web-tls -n prod-portal --cert=./star_partners-steel_com_NginX_cert.pem --key=./star_partners-steel_com_NginX_nopass_key.pem
+
+-- 인증서 업그레이드 할 경우
+(ex)
+kubectl create secret tls porptal-member-web-tls -n prod-portal --cert=./star_partners-steel_com_NginX_cert.pem --key=./star_partners-steel_com_NginX_nopass_key.pem --dry-run=client -o yaml |kubectl apply -f -
+(위 처럼 해야 지워지지 않고 업뎃 된다.)
