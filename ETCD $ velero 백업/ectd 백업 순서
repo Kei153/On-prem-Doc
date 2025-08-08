@@ -1,6 +1,33 @@
--- etcd 백업을 위한 스크립트 -- (버전별로 다를 수 잇다. 확인 해 볼것)
+-- etcd 백업을 위한 스크립트 -- (버전별로 다를 수 잇다. 경로들이 어디있는지 확인 해 볼것)
+
+** ❗️❗️etcd 정보를 얻을 때는 kubeadm이든, kubespray든, 버전이 몇이든 제일 먼저 해야 하는 건 현재 클러스터에서 etcd가 어떻게 실행되고 있는지 확인하는 것❗️❗️ **
+
+💡 1단계. etcd가 어디서 어떻게 실행되는지 확인 : systemd 서비스인지, static pod인지를 먼저 확인
+  # systemd 서비스 여부 확인
+    systemctl status etcd
+  # static pod 여부 확인 (kubeadm에서 자주 씀)
+    ls -l /etc/kubernetes/manifests/etcd.yaml
+
+💡2단계. 환경변수 또는 실행 옵션에서 인증서·엔드포인트 확인 - 여기서 ETCD_CERT_FILE, ETCD_KEY_FILE, ETCD_TRUSTED_CA_FILE, ETCD_LISTEN_CLIENT_URLS를 확인.
+  #systemd 환경
+    systemctl cat etcd
+    cat /etc/etcd.env
+  #static pod 환경
+    grep -E -- '--cert-file|--key-file|--trusted-ca-file|--listen-client-urls' /etc/kubernetes/manifests/etcd.yaml
+
+💡3단계. 엔드포인트 테스트
+  ETCDCTL_API=3 etcdctl \
+  --endpoints=https://< 주ETCD 있는 IP>:2379 \
+  --cacert=<ca 경로> \
+  --cert=<cert 경로> \
+  --key=<key 경로> \
+  endpoint status -w table
+
+
 
 * kubespray *
+(최신 kubespray 경로 확인한 명령어 : sudo cat /etc/etcd.env | grep -E 'ETCD_(NAME|DATA_DIR|ADVERTISE_CLIENT_URLS|LISTEN_CLIENT_URLS|TRUSTED_CA_FILE|CERT_FILE|KEY_FILE)=')
+
 
 ETCDCTL_API=3 etcdctl snapshot save /home/<사용자>/<설정한 디렉토리명>/db.snapshot \
   --endpoints=https://(etcd 클러스터의 ip - 복제할 etcd가 있는 마스터 노드 ip):2379 \
