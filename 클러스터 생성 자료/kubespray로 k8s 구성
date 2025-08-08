@@ -119,7 +119,7 @@ Summary 에서 이름 정하고 저장
 			[kube_control_plane]
 			master
 
-			[etcd:children]
+			[etcd:children] (여기도 etcd 멤버만큼)
 			kube_control_plane
 
 			[kube_node]
@@ -208,4 +208,5 @@ open /Applications/OpenLens.app
 
 
 3. openlens 셋팅까지 되면 성공
+
 
