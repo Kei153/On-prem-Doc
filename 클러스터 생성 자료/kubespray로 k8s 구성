@@ -123,7 +123,7 @@ for ip in "${IPS[@]}"; do
     sshpass -p "$password" ssh -p $port $user@$ip "$commands"
 done
 echo "모든 서버 설정 완료!! 🎉🎉🎉"
-
+(2번 과정 필요 없음)
 
 
 
@@ -252,6 +252,7 @@ open /Applications/OpenLens.app
 
 
 3. openlens 셋팅까지 되면 성공
+
 
 
 
