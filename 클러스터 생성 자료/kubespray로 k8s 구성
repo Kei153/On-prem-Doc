@@ -149,7 +149,7 @@ echo "모든 서버 설정 완료!! 🎉🎉🎉"
 				helm_enabled: true
 				metrics_server_enabled: true
 
-		: cd inventory/${project-name}/group_vars/k8s_cluster/k8s-cluster.yml
+		: cd inventory/${project_name}/group_vars/k8s_cluster/k8s-cluster.yml
 			- (…)
 			- kube_proxy_strict_arp: true
 			- (…)
@@ -252,6 +252,7 @@ open /Applications/OpenLens.app
 
 
 3. openlens 셋팅까지 되면 성공
+
 
 
 
