@@ -85,6 +85,50 @@ Summary 에서 이름 정하고 저장
     성공하면 복사한 각 노드의 ~/.ssh/authorized_keys 에 공개키가 자동 추가됨
     접속 테스트 : ssh <user>@<nodeIP>
 
+
+--------------------------------------------------------------------------------------
+
+(회사 같은 경우는 여러 IP라서 명령어로 ssh키를 전달함. 1번의 authorized_keys 에 600 권한 준 후 에 아래 실행)
+
+✅  각 서버의 user / ip / port / password 정보들을 미리 준비하고 ssh 키를 생성하여 각 서버들에 연결(마스터에서 실행)
+declare -a IPS=(
+    # dev-ai-master-app 
+    "10.100.0.66"
+    # dev-ai-system
+    "10.100.0.65"
+    # dev-ai-db
+    "10.100.0.56"
+.....
+)
+# SSH 포트 및 사용자 설정
+port=2022
+user="laonpeople"
+# 패스워드 (보안 문제로 인한 주의 필요)
+read -sp "🚫 🚧 🔐 Enter your SSH password : " password
+echo
+# 명령어를 하나의 스크립트처럼 실행하기 위해 변수에 저장
+# 스왑 해제 설정 / NFS 서버와 클라이언트를 설정하는 데 필요한 패키지들을 설치
+commands="
+sudo swapoff -a
+sudo sed -i 's/.*swap.*/#&/' /etc/fstab
+cat /etc/fstab
+sudo apt-get update -y
+sudo apt-get install -y nfs-common nfs-kernel-server rpcbind
+"
+# 각 서버에서 스크립트 실행
+for ip in "${IPS[@]}"; do
+    # SSH 키 복사
+    sshpass -p "$password" ssh-copy-id -p $port -o StrictHostKeyChecking=no $user@$ip
+    # 스크립트를 서버에서 직접 실행
+    sshpass -p "$password" ssh -p $port $user@$ip "$commands"
+done
+echo "모든 서버 설정 완료!! 🎉🎉🎉"
+
+
+
+
+
+
 2. 마스터 노드로 정할 서버에 접속해서 k8s 구성 준비
   - 마스터에서 노드로의 비번 없는 ssh 접속을 위해 1번 과정 반복 (마스터에서 만든 키를 마스터와 노드에 다 키 복사)
 	명령어 : ssh-copy-id -i ~/.ssh/id_rsa.pub kei@<마스터,노드IP들>
@@ -208,5 +252,6 @@ open /Applications/OpenLens.app
 
 
 3. openlens 셋팅까지 되면 성공
+
 
 
