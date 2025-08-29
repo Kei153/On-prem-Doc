@@ -1,0 +1,7 @@
+finalize 삭제해도 네임스페이스가 그대로명 etcdctl 명령어 써야 한다
+
+etcdctl --endpoints=https://10.100.0.66:2379 \   # 엔드포인트는 마스터 노드 ip
+  --cacert=/etc/ssl/etcd/ssl/ca.pem \ # 이 위치는 내 k8s 정보 경로 알아보기
+  --cert=/etc/ssl/etcd/ssl/node-dev-ai-app-1.pem \
+  --key=/etc/ssl/etcd/ssl/node-dev-ai-app-1-key.pem \
+  del /registry/namespaces/elk # 삭제하고 싶은 내임스페이스
