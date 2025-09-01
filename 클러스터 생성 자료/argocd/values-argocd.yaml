@@ -371,7 +371,7 @@ configs:
 
     # -- Known hosts to be added to the known host list by default.
     # @default -- See [values.yaml]
-    knownHosts: | #✅ 이 키값은 해당 git 사이트의 서버 키 값을 들고와야 한다. 터미널에서 'ssh-keyscan bitbucket.org >> known_hosts \cat known_hosts' 명령어로 확인 가능(사내에서 ssh안쓰는데 왜 한지는 모르겟다.)
+    knownHosts: | #✅ 이 키값은 해당 git 사이트의 서버 키 값을 들고와야 한다. 터미널에서 'ssh-keyscan bitbucket.org >> known_hosts \cat known_hosts' 명령어로 확인 가능(argocd git sync 맞출때 쓰는듯 함. repo가 bitbucket에 잇다.)
     
       bitbucket.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPIQmuzMBuKdWeF4+a2sjSSpBK0iqitSQ+5BM9KhpexuGt20JpTVM7u5BDZngncgrqDMbWdxMWWOGtZ9UgbqgZE=
       bitbucket.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIazEu89wgQZ4bqs3d63QSMzYVa0MuJ2e2gKTKqu+UUO
