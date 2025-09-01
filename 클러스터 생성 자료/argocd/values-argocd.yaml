@@ -1630,7 +1630,7 @@ redis-ha: #✅
   auth: true #✅ 이 기능 쓰기위해 같은 네임스페이스에 미리 secret 생성함. kubectl create secret generic testargocd-redis \ --from-literal=auth=laon0118 \ -n test
   # -- Existing Secret to use for redis-ha authentication.
   # By default the redis-secret-init Job is generating this Secret.
-  existingSecret: argocd-redis #✅
+  existingSecret: argocd-redis #✅ 미리 만들지 않으면 아래 redisSecretInit을 활성화 해서 자동 생성으로 한다.
 
   # -- Whether the Redis server pods should be forced to run on separate nodes.
   hardAntiAffinity: false
@@ -1685,7 +1685,7 @@ externalRedis:
 
 redisSecretInit: #❓
   # -- Enable Redis secret initialization. If disabled, secret must be provisioned by alternative methods
-  enabled: false #✅ Redis가 시작될 때 password를 Secret에서 읽도록 활성화 하는 부분. 그러나 현재 password 설정을 안해서 실제로는 안씀. 비활성화 해도 redis-ha 쓸 수 있음
+  enabled: false #✅ 활성화 하면 Redis가 시작될 때 password를 자동 생성. 미리 만들어 놓으면 비활성화 해놓는다.
   # -- Redis secret-init name
   name: redis-secret-init
 
