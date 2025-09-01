@@ -3164,9 +3164,9 @@ applicationSet:
 
   ## Ingress for the Git Generator webhook
   ## Ref: https://argocd-applicationset.readthedocs.io/en/master/Generators-Git/#webhook-configuration)
-  ingress: #✅ 외부접근 안하니 사실 필요 없다.
+  ingress: # ✅ 
     # -- Enable an ingress resource for ApplicationSet webhook
-    enabled: false #✅
+    enabled: true # ✅
     # -- Additional ingress labels
     labels: {}
     # -- Additional ingress annotations
